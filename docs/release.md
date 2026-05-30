@@ -24,8 +24,12 @@ Create a compact source archive with:
 scripts/make-source-release.sh
 ```
 
-By default this creates `dist/exr_image-<VERSION>.tar.gz` and, when `zip` is
-available, `dist/exr_image-<VERSION>.zip`.
+By default this creates:
+
+- `dist/exr_image.h`
+- `dist/exr_image-<VERSION>.tar.gz`
+- `dist/exr_image-<VERSION>.zip`, when `zip` is available
+- `dist/SHA256SUMS`, when `sha256sum` is available
 
 The package includes:
 
@@ -45,5 +49,6 @@ Use the semantic release name as the tag, for example:
 git tag -a v0.1.0-rc1 -m "exr_image.h v0.1.0-rc1"
 ```
 
-Attach the generated source archive. Avoid attaching the full fixture corpora
-unless there is a specific reason to publish a separate test-data archive.
+Attach the generated header, source archives, and checksum file. Avoid attaching
+the full fixture corpora unless there is a specific reason to publish a separate
+test-data archive.
