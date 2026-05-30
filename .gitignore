@@ -1,3 +1,6 @@
+/dist/
+/third_party/
+
 # Prerequisites
 *.d
 
@@ -36,11 +39,19 @@
 *.x86_64
 *.hex
 
-# Debug files
+# Debug and analyzer files
 *.dSYM/
 *.su
 *.idb
 *.pdb
+*.dwo
+*.plist
+
+# Coverage and profiling
+*.gcda
+*.gcno
+*.profraw
+*.profdata
 
 # Kernel Module Compile Results
 *.mod*
@@ -51,5 +62,3 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# debug information files
-*.dwo
