@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   linux:
     name: Linux GCC/Clang
@@ -12,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
@@ -20,18 +23,18 @@ jobs:
           sudo apt-get install -y build-essential clang
 
       - name: Release gate
-        run: scripts/check-release.sh
+        run: bash scripts/check-release.sh
 
       - name: Source package
-        run: scripts/make-source-release.sh
+        run: bash scripts/make-source-release.sh
 
   windows:
     name: Windows MSVC
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: MSVC smoke gate
         shell: cmd
