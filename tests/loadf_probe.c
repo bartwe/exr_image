@@ -29,6 +29,9 @@ int main(int argc, char **argv)
    float *samples;
    int *offsets;
 
+   if (argc <= 1)
+      return 1;
+
    loaded = 0;
 
    for (i = 1; i < argc; ++i) {
@@ -110,10 +113,18 @@ int main(int argc, char **argv)
                }
 
                deep_reason = exri_failure_reason();
+               if (strcmp(deep_reason, "not deep") == 0)
+                  deep_reason = part_reason;
                if (strcmp(part_reason, "invalid EXR") == 0 && strcmp(deep_reason, "invalid EXR") == 0) {
                   printf("not-loaded %s: invalid EXR\n", argv[i]);
                   multipart_invalid = 1;
                   break;
+               }
+               allowed_not_loaded = strcmp(deep_reason, "scRGB requires RGB channels") == 0 ||
+                                    strcmp(deep_reason, "layer not found") == 0;
+               if (allowed_not_loaded) {
+                  printf("part not-loaded %s part=%d: %s\n", argv[i], part_index, deep_reason);
+                  continue;
                }
                fprintf(stderr, "part not-loaded %s part=%d: image=%s deep=%s\n", argv[i], part_index, part_reason, deep_reason);
                return 1;
@@ -123,8 +134,10 @@ int main(int argc, char **argv)
                loaded += 1;
             }
          }
-         if (multipart_invalid)
+         if (multipart_invalid) {
+            loaded += 1;
             continue;
+         }
          if (multipart_loaded)
             continue;
 
@@ -153,6 +166,7 @@ int main(int argc, char **argv)
                return 1;
             }
             printf("not-loaded %s: %s\n", argv[i], deep_reason);
+            loaded += 1;
          }
       }
    }

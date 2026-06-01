@@ -11,6 +11,7 @@ C_TESTS=(
    bounds
    leak
    safety
+   limits
    negative
    scrgb
    spectral
@@ -28,6 +29,7 @@ C_RUNTIME_TESTS=(
    bounds
    leak
    safety
+   limits
    negative
    scrgb
    spectral

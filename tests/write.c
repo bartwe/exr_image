@@ -17,8 +17,8 @@ typedef struct
 typedef struct
 {
    unsigned char const *data;
-   int len;
-   int pos;
+   size_t len;
+   size_t pos;
 } reader_state;
 
 static int nearf(float a, float b)
@@ -58,35 +58,40 @@ static int append_bytes(writer_state *w, void const *data, int size)
    return 1;
 }
 
-static int EXRI_CALLBACK write_cb(void *user, void const *data, int size)
+static int EXRI_CALLBACK write_cb(void *user, void const *data, size_t size)
 {
    writer_state *w;
 
    w = (writer_state *) user;
    if (w->short_write)
-      return size > 0 ? size - 1 : 0;
-   if (!append_bytes(w, data, size))
-      return -1;
-   return size;
+      return 0;
+   if (size > (size_t) 0x7fffffff)
+      return 0;
+   if (!append_bytes(w, data, (int) size))
+      return 0;
+   return 1;
 }
 
-static int EXRI_CALLBACK read_cb(void *user, char *data, int size)
+static int EXRI_CALLBACK read_cb(void *user, void *data, size_t size, size_t *bytes_read)
 {
    reader_state *r;
-   int remaining;
+   size_t remaining;
 
    r = (reader_state *) user;
-   if (r == NULL || data == NULL || size < 0)
-      return -1;
-   if (r->pos >= r->len)
+   if (r == NULL || data == NULL || bytes_read == NULL)
       return 0;
+   if (r->pos >= r->len) {
+      *bytes_read = 0;
+      return 1;
+   }
 
    remaining = r->len - r->pos;
    if (size > remaining)
       size = remaining;
-   memcpy(data, r->data + r->pos, (size_t) size);
+   memcpy(data, r->data + r->pos, size);
    r->pos += size;
-   return size;
+   *bytes_read = size;
+   return 1;
 }
 
 static int EXRI_CALLBACK eof_cb(void *user)
@@ -153,6 +158,99 @@ static unsigned int get32(unsigned char const *p)
           ((unsigned int) p[1] << 8) |
           ((unsigned int) p[2] << 16) |
           ((unsigned int) p[3] << 24);
+}
+
+static int get64_as_int(unsigned char const *p, int *out)
+{
+   unsigned int lo;
+   unsigned int hi;
+
+   lo = get32(p);
+   hi = get32(p + 4);
+   if (hi != 0u || lo > (unsigned int) 0x7fffffff)
+      return 0;
+   *out = (int) lo;
+   return 1;
+}
+
+static int header_end_pos(unsigned char const *data, int len, int *out)
+{
+   int pos;
+   int start;
+   unsigned int attr_len;
+
+   if (len < 9)
+      return 0;
+
+   pos = 8;
+   for (;;) {
+      if (pos >= len)
+         return 0;
+
+      start = pos;
+      while (pos < len && data[pos] != 0)
+         pos += 1;
+      if (pos >= len)
+         return 0;
+      if (pos == start) {
+         *out = pos + 1;
+         return 1;
+      }
+      pos += 1;
+
+      while (pos < len && data[pos] != 0)
+         pos += 1;
+      if (pos >= len)
+         return 0;
+      pos += 1;
+
+      if (!exri__has_bytes_at(pos, len, 4))
+         return 0;
+      attr_len = get32(data + pos);
+      pos += 4;
+      if (attr_len > (unsigned int) (len - pos))
+         return 0;
+      pos += (int) attr_len;
+   }
+}
+
+static int scanline_chunk_payloads_bounded(unsigned char const *data, int len, int w, int h, int comp, int bytes_per_sample, int lines_per_chunk)
+{
+   int header_end;
+   int num_blocks;
+   int block_index;
+   int offset;
+   int data_len;
+   int y;
+   int num_lines;
+   int max_payload;
+
+   if (!header_end_pos(data, len, &header_end))
+      return 0;
+   num_blocks = ((h - 1) / lines_per_chunk) + 1;
+   if (!exri__has_bytes_at(header_end, len, num_blocks * 8))
+      return 0;
+
+   for (block_index = 0; block_index < num_blocks; ++block_index) {
+      if (!get64_as_int(data + header_end + block_index * 8, &offset))
+         return 0;
+      if (!exri__has_bytes_at(offset, len, 8))
+         return 0;
+      y = (int) get32(data + offset);
+      data_len = (int) get32(data + offset + 4);
+      if (y != block_index * lines_per_chunk || data_len <= 0)
+         return 0;
+      num_lines = lines_per_chunk;
+      if (num_lines > h - y)
+         num_lines = h - y;
+      max_payload = w * comp * bytes_per_sample * num_lines;
+      if (data_len > max_payload)
+         return 0;
+      if (!exri__has_bytes_at(offset + 8, len, data_len))
+         return 0;
+   }
+
+   return 1;
 }
 
 static int compression_value(unsigned char const *data, int len, unsigned char *out)
@@ -233,7 +331,7 @@ static int check_memory_roundtrip(int comp, int compression)
    }
 
    x = y = c = 0;
-   if (!exri_info_from_memory(bytes, len, &x, &y, &c)) {
+   if (!exri_info_from_memory(bytes, (size_t) len, &x, &y, &c)) {
       fprintf(stderr, "info failed comp=%d compression=%d: %s\n", comp, compression, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
@@ -244,7 +342,7 @@ static int check_memory_roundtrip(int comp, int compression)
       return 0;
    }
 
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, comp);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, comp);
    if (!loaded) {
       fprintf(stderr, "load failed comp=%d compression=%d: %s\n", comp, compression, exri_failure_reason());
       exri_image_free(bytes);
@@ -255,7 +353,7 @@ static int check_memory_roundtrip(int comp, int compression)
    exri_image_free(loaded);
 
    if (ok && (comp == 3 || comp == 4)) {
-      loaded = exri_loadf_scrgb_from_memory(bytes, len, &x, &y, &c, comp, EXRI_COLOR_STRICT);
+      loaded = exri_loadf_scrgb_from_memory(bytes, (size_t) len, &x, &y, &c, comp, EXRI_COLOR_STRICT);
       if (!loaded) {
          fprintf(stderr, "strict scRGB load failed comp=%d compression=%d: %s\n", comp, compression, exri_failure_reason());
          ok = 0;
@@ -290,7 +388,7 @@ static int check_callbacks(void)
       return 0;
    }
 
-   loaded = exri_loadf_from_memory(w.data, w.len, &x, &y, &c, 3);
+   loaded = exri_loadf_from_memory(w.data, (size_t) w.len, &x, &y, &c, 3);
    if (!loaded) {
       fprintf(stderr, "callback load failed: %s\n", exri_failure_reason());
       free(w.data);
@@ -306,7 +404,7 @@ static int check_callbacks(void)
       fprintf(stderr, "callback rle write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_from_memory(w.data, w.len, &x, &y, &c, 3);
+   loaded = exri_loadf_from_memory(w.data, (size_t) w.len, &x, &y, &c, 3);
    if (!loaded) {
       fprintf(stderr, "callback rle load failed: %s\n", exri_failure_reason());
       free(w.data);
@@ -325,7 +423,7 @@ static int check_callbacks(void)
 
 static int check_rle_fallback(void)
 {
-   float source[32 * 4 * 4];
+   float source[256 * 2 * 4];
    unsigned char *raw_bytes;
    unsigned char *rle_bytes;
    float *loaded;
@@ -351,9 +449,9 @@ static int check_rle_fallback(void)
    rle_bytes = NULL;
    raw_len = rle_len = 0;
 
-   if (!exri_writef_to_memory(&raw_bytes, &raw_len, 32, 4, 4, source, EXRI_WRITE_COMPRESSION_NONE))
+   if (!exri_writef_to_memory(&raw_bytes, &raw_len, 256, 2, 4, source, EXRI_WRITE_COMPRESSION_NONE))
       return 0;
-   if (!exri_writef_to_memory(&rle_bytes, &rle_len, 32, 4, 4, source, EXRI_WRITE_COMPRESSION_RLE)) {
+   if (!exri_writef_to_memory(&rle_bytes, &rle_len, 256, 2, 4, source, EXRI_WRITE_COMPRESSION_RLE)) {
       exri_image_free(raw_bytes);
       return 0;
    }
@@ -364,14 +462,14 @@ static int check_rle_fallback(void)
       exri_image_free(rle_bytes);
       return 0;
    }
-   if (!exri_writef("/tmp/exri_write_rle_fallback.exr", 32, 4, 4, source, EXRI_WRITE_COMPRESSION_RLE)) {
+   if (!exri_writef("/tmp/exri_write_rle_fallback.exr", 256, 2, 4, source, EXRI_WRITE_COMPRESSION_RLE)) {
       fprintf(stderr, "RLE fallback file write failed: %s\n", exri_failure_reason());
       exri_image_free(raw_bytes);
       exri_image_free(rle_bytes);
       return 0;
    }
 
-   loaded = exri_loadf_from_memory(rle_bytes, rle_len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(rle_bytes, (size_t) rle_len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "RLE fallback load failed: %s\n", exri_failure_reason());
       exri_image_free(raw_bytes);
@@ -379,7 +477,7 @@ static int check_rle_fallback(void)
       return 0;
    }
 
-   ok = x == 32 && y == 4 && c == 4 && compare_pixels(source, loaded, 32 * 4 * 4);
+   ok = x == 256 && y == 2 && c == 4 && compare_pixels(source, loaded, 256 * 2 * 4);
    exri_image_free(loaded);
    exri_image_free(raw_bytes);
    exri_image_free(rle_bytes);
@@ -426,7 +524,7 @@ static int check_rle_smaller(void)
       return 0;
    }
 
-   loaded = exri_loadf_from_memory(rle_bytes, rle_len, &x, &y, &c, 3);
+   loaded = exri_loadf_from_memory(rle_bytes, (size_t) rle_len, &x, &y, &c, 3);
    if (!loaded) {
       fprintf(stderr, "RLE flat load failed: %s\n", exri_failure_reason());
       exri_image_free(raw_bytes);
@@ -459,8 +557,13 @@ static int check_zip_blocks(void)
       fprintf(stderr, "ZIP memory write failed: %s\n", exri_failure_reason());
       return 0;
    }
+   if (!scanline_chunk_payloads_bounded(bytes, len, 5, 19, 4, 4, 16)) {
+      fprintf(stderr, "ZIP chunk payload exceeded unpacked block size\n");
+      exri_image_free(bytes);
+      return 0;
+   }
 
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "ZIP memory load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -524,7 +627,7 @@ static int check_b44_blocks(void)
       fprintf(stderr, "B44 memory write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded || x != 9 || y != 35 || c != 4) {
       fprintf(stderr, "B44 memory load failed: %s\n", loaded ? "bad info" : exri_failure_reason());
       if (loaded)
@@ -595,7 +698,7 @@ static int check_tiled_writes(void)
          fprintf(stderr, "tiled memory write failed compression=%d: %s\n", compressions[i], exri_failure_reason());
          return 0;
       }
-      loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+      loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
       if (!loaded) {
          fprintf(stderr, "tiled memory load failed compression=%d: %s\n", compressions[i], exri_failure_reason());
          exri_image_free(bytes);
@@ -693,19 +796,19 @@ static int check_tiled_writes(void)
       fprintf(stderr, "tiled mipmap ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   if (!exri_version_from_memory(bytes, len, &version, &version_flags) ||
+   if (!exri_version_from_memory(bytes, (size_t) len, &version, &version_flags) ||
        version != 2 ||
        (version_flags & EXRI_VERSION_FLAG_TILED) == 0) {
       fprintf(stderr, "tiled mipmap version parse failed version=%d flags=%d: %s\n", version, version_flags, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
-   if (!exri_tiled_level_count_from_memory(bytes, len, &nx, &ny) || nx != 4 || ny != 4) {
+   if (!exri_tiled_level_count_from_memory(bytes, (size_t) len, &nx, &ny) || nx != 4 || ny != 4) {
       fprintf(stderr, "tiled mipmap level count failed nx=%d ny=%d: %s\n", nx, ny, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
-   if (!exri_part_tiled_level_count_from_memory(bytes, len, 0, &nx, &ny) || nx != 4 || ny != 4) {
+   if (!exri_part_tiled_level_count_from_memory(bytes, (size_t) len, 0, &nx, &ny) || nx != 4 || ny != 4) {
       fprintf(stderr, "part tiled mipmap level count failed nx=%d ny=%d: %s\n", nx, ny, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
@@ -714,7 +817,7 @@ static int check_tiled_writes(void)
    cb.skip = NULL;
    cb.eof = eof_cb;
    r.data = bytes;
-   r.len = len;
+   r.len = (size_t) len;
    r.pos = 0;
    if (!exri_version_from_callbacks(&cb, &r, &version, &version_flags) ||
        version != 2 ||
@@ -735,7 +838,7 @@ static int check_tiled_writes(void)
       exri_image_free(bytes);
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded || x != 7 || y != 5 || c != 4 || !compare_pixels(source, loaded, 7 * 5 * 4)) {
       fprintf(stderr, "tiled mipmap top level load failed: %s\n", loaded ? "bad data" : exri_failure_reason());
       if (loaded)
@@ -744,7 +847,7 @@ static int check_tiled_writes(void)
       return 0;
    }
    exri_image_free(loaded);
-   loaded = exri_loadf_tiled_level_from_memory(bytes, len, 1, 1, &x, &y, &c, 4);
+   loaded = exri_loadf_tiled_level_from_memory(bytes, (size_t) len, 1, 1, &x, &y, &c, 4);
    if (!loaded || x != 4 || y != 3 || c != 4) {
       fprintf(stderr, "tiled mipmap selected level load failed x=%d y=%d c=%d: %s\n", x, y, c, loaded ? "bad info" : exri_failure_reason());
       if (loaded)
@@ -761,12 +864,12 @@ static int check_tiled_writes(void)
       fprintf(stderr, "tiled ripmap ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   if (!exri_tiled_level_count_from_memory(bytes, len, &nx, &ny) || nx != 3 || ny != 3) {
+   if (!exri_tiled_level_count_from_memory(bytes, (size_t) len, &nx, &ny) || nx != 3 || ny != 3) {
       fprintf(stderr, "tiled ripmap level count failed nx=%d ny=%d: %s\n", nx, ny, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
-   loaded = exri_loadf_tiled_level_from_memory(bytes, len, 2, 1, &x, &y, &c, 4);
+   loaded = exri_loadf_tiled_level_from_memory(bytes, (size_t) len, 2, 1, &x, &y, &c, 4);
    if (!loaded || x != 1 || y != 2 || c != 4) {
       fprintf(stderr, "tiled ripmap selected level load failed x=%d y=%d c=%d: %s\n", x, y, c, loaded ? "bad info" : exri_failure_reason());
       if (loaded)
@@ -801,7 +904,7 @@ static int check_region_loads(void)
       return 0;
    }
 
-   loaded = exri_loadf_region_from_memory(bytes, len, 2, 1, 3, 2, &x, &y, &c, 4);
+   loaded = exri_loadf_region_from_memory(bytes, (size_t) len, 2, 1, 3, 2, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "region scanline load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -827,7 +930,7 @@ static int check_region_loads(void)
       return 0;
    }
 
-   loaded = exri_loadf_region_from_memory(bytes, len, 6, 0, 2, 1, &x, &y, &c, 4);
+   loaded = exri_loadf_region_from_memory(bytes, (size_t) len, 6, 0, 2, 1, &x, &y, &c, 4);
    if (loaded != NULL) {
       fprintf(stderr, "invalid region unexpectedly loaded\n");
       exri_image_free(loaded);
@@ -918,18 +1021,18 @@ static int check_named_channel_writes(void)
       return 0;
    }
 
-   if (!exri_channel_count_from_memory(bytes, len, &count) || count != 3) {
+   if (!exri_channel_count_from_memory(bytes, (size_t) len, &count) || count != 3) {
       fprintf(stderr, "bad named channel count: %d reason=%s\n", count, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
    for (i = 0; i < 3; ++i) {
       x_sampling = y_sampling = p_linear = 0;
-      if (!exri_channel_name_from_memory(bytes, len, i, name, (int) sizeof(name)) ||
+      if (!exri_channel_name_from_memory(bytes, (size_t) len, i, name, (int) sizeof(name)) ||
           strcmp(name, channels[i].name) != 0 ||
-          !exri_channel_pixel_type_from_memory(bytes, len, i, &pixel_type) ||
+          !exri_channel_pixel_type_from_memory(bytes, (size_t) len, i, &pixel_type) ||
           pixel_type != EXRI_PIXEL_FLOAT ||
-          !exri_channel_sampling_from_memory(bytes, len, i, &x_sampling, &y_sampling, &p_linear) ||
+          !exri_channel_sampling_from_memory(bytes, (size_t) len, i, &x_sampling, &y_sampling, &p_linear) ||
           x_sampling != 1 || y_sampling != 1 || p_linear != 0) {
          fprintf(stderr, "bad named channel metadata at %d: %s type=%d sampling=%d,%d pLinear=%d reason=%s\n",
                  i, name, pixel_type, x_sampling, y_sampling, p_linear, exri_failure_reason());
@@ -938,7 +1041,7 @@ static int check_named_channel_writes(void)
       }
    }
 
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named channel load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -951,14 +1054,14 @@ static int check_named_channel_writes(void)
       return 0;
    }
 
-   if (!exri_is_spectral_from_memory(bytes, len) ||
-       !exri_spectrum_type_from_memory(bytes, len, &spectrum_type) ||
+   if (!exri_is_spectral_from_memory(bytes, (size_t) len) ||
+       !exri_spectrum_type_from_memory(bytes, (size_t) len, &spectrum_type) ||
        spectrum_type != EXRI_SPECTRUM_POLARISED ||
-       !exri_spectral_wavelengths_from_memory(bytes, len, wavelengths, 4, &count) ||
+       !exri_spectral_wavelengths_from_memory(bytes, (size_t) len, wavelengths, 4, &count) ||
        count != 2 ||
        !nearf(wavelengths[0], 550.0f) ||
        !nearf(wavelengths[1], 610.5f) ||
-       !exri_spectral_units_from_memory(bytes, len, units_out, (int) sizeof(units_out)) ||
+       !exri_spectral_units_from_memory(bytes, (size_t) len, units_out, (int) sizeof(units_out)) ||
        strcmp(units_out, units) != 0) {
       fprintf(stderr, "named channel spectral metadata failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -973,7 +1076,7 @@ static int check_named_channel_writes(void)
       fprintf(stderr, "named channel PIZ write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named channel PIZ load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -993,7 +1096,7 @@ static int check_named_channel_writes(void)
       fprintf(stderr, "named channel tiled ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named channel tiled ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1016,12 +1119,12 @@ static int check_named_channel_writes(void)
       fprintf(stderr, "named channel HALF ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   if (!exri_channel_pixel_type_from_memory(bytes, len, 0, &pixel_type) || pixel_type != EXRI_PIXEL_HALF) {
+   if (!exri_channel_pixel_type_from_memory(bytes, (size_t) len, 0, &pixel_type) || pixel_type != EXRI_PIXEL_HALF) {
       fprintf(stderr, "bad named channel HALF metadata: %s\n", exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded || x != 4 || y != 3 || c != 3) {
       fprintf(stderr, "named channel HALF load failed: %s\n", loaded ? "bad info" : exri_failure_reason());
       if (loaded)
@@ -1042,7 +1145,7 @@ static int check_named_channel_writes(void)
       free(w.data);
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(w.data, w.len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(w.data, (size_t) w.len, &x, &y, &c);
    if (!loaded || x != 4 || y != 3 || c != 3) {
       fprintf(stderr, "named channel callback load failed: %s\n", loaded ? "bad info" : exri_failure_reason());
       if (loaded)
@@ -1055,7 +1158,7 @@ static int check_named_channel_writes(void)
    read_callbacks.skip = NULL;
    read_callbacks.eof = eof_cb;
    r.data = w.data;
-   r.len = w.len;
+   r.len = (size_t) w.len;
    r.pos = 0;
    if (!exri_channel_count_from_callbacks(&read_callbacks, &r, &count) || count != 3) {
       fprintf(stderr, "named channel callback metadata count failed: %s\n", exri_failure_reason());
@@ -1178,12 +1281,12 @@ static int check_uint_writes(void)
       return 0;
    }
    pixel_type = -1;
-   if (!exri_channel_pixel_type_from_memory(bytes, len, 0, &pixel_type) || pixel_type != EXRI_PIXEL_UINT) {
+   if (!exri_channel_pixel_type_from_memory(bytes, (size_t) len, 0, &pixel_type) || pixel_type != EXRI_PIXEL_UINT) {
       fprintf(stderr, "bad UINT channel metadata: %d reason=%s\n", pixel_type, exri_failure_reason());
       exri_image_free(bytes);
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "UINT ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1201,7 +1304,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "UINT PIZ write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "UINT PIZ load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1219,7 +1322,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "UINT PXR24 write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "UINT PXR24 load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1237,7 +1340,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "UINT tiled ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_from_memory(bytes, len, &x, &y, &c, 4);
+   loaded = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &c, 4);
    if (!loaded) {
       fprintf(stderr, "UINT tiled ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1263,13 +1366,13 @@ static int check_uint_writes(void)
    }
    for (i = 0; i < 3; ++i) {
       pixel_type = -1;
-      if (!exri_channel_pixel_type_from_memory(bytes, len, i, &pixel_type) || pixel_type != EXRI_PIXEL_UINT) {
+      if (!exri_channel_pixel_type_from_memory(bytes, (size_t) len, i, &pixel_type) || pixel_type != EXRI_PIXEL_UINT) {
          fprintf(stderr, "bad named UINT channel metadata at %d: %d reason=%s\n", i, pixel_type, exri_failure_reason());
          exri_image_free(bytes);
          return 0;
       }
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named UINT ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1287,7 +1390,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "named UINT PXR24 write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named UINT PXR24 load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1305,7 +1408,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "named UINT tiled ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "named UINT tiled ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1328,13 +1431,13 @@ static int check_uint_writes(void)
    }
    for (i = 0; i < 3; ++i) {
       pixel_type = -1;
-      if (!exri_channel_pixel_type_from_memory(bytes, len, i, &pixel_type) || pixel_type != channels[i].pixel_type) {
+      if (!exri_channel_pixel_type_from_memory(bytes, (size_t) len, i, &pixel_type) || pixel_type != channels[i].pixel_type) {
          fprintf(stderr, "bad mixed channel metadata at %d: %d reason=%s\n", i, pixel_type, exri_failure_reason());
          exri_image_free(bytes);
          return 0;
       }
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "mixed channel ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1352,7 +1455,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "mixed channel PIZ write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "mixed channel PIZ load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1370,7 +1473,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "mixed channel PXR24 write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "mixed channel PXR24 load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1388,7 +1491,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "mixed channel tiled PIZ write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "mixed channel tiled PIZ load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1406,7 +1509,7 @@ static int check_uint_writes(void)
       fprintf(stderr, "mixed channel tiled ZIP write failed: %s\n", exri_failure_reason());
       return 0;
    }
-   loaded = exri_loadf_channels_from_memory(bytes, len, &x, &y, &c);
+   loaded = exri_loadf_channels_from_memory(bytes, (size_t) len, &x, &y, &c);
    if (!loaded) {
       fprintf(stderr, "mixed channel tiled ZIP load failed: %s\n", exri_failure_reason());
       exri_image_free(bytes);
@@ -1657,7 +1760,7 @@ static int check_multipart_writes(void)
    unsigned char *bytes;
    unsigned char *bad_bytes;
    float *pixels;
-   int len;
+   size_t len;
    int part_count;
    int x;
    int y;
@@ -1698,17 +1801,17 @@ static int check_multipart_writes(void)
    version_flags = 0;
    if (!exri_writef_multipart_to_memory(&bytes, &len, parts, 2))
       return 0;
-   if (!exri_version_from_memory(bytes, len, &version, &version_flags) ||
+   if (!exri_version_from_memory(bytes, (size_t) len, &version, &version_flags) ||
        version != 2 ||
        (version_flags & EXRI_VERSION_FLAG_MULTIPART) == 0) {
       exri_image_free(bytes);
       return 0;
    }
-   if (!exri_part_count_from_memory(bytes, len, &part_count) || part_count != 2) {
+   if (!exri_part_count_from_memory(bytes, (size_t) len, &part_count) || part_count != 2) {
       exri_image_free(bytes);
       return 0;
    }
-   pixels = exri_loadf_from_memory(bytes, len, &x, &y, &comp, 4);
+   pixels = exri_loadf_from_memory(bytes, (size_t) len, &x, &y, &comp, 4);
    if (pixels != NULL) {
       exri_image_free(pixels);
       exri_image_free(bytes);
@@ -1717,7 +1820,7 @@ static int check_multipart_writes(void)
 
    for (part = 0; part < 2; ++part) {
       x = y = comp = 0;
-      pixels = exri_loadf_part_from_memory(bytes, len, part, &x, &y, &comp, 4);
+      pixels = exri_loadf_part_from_memory(bytes, (size_t) len, part, &x, &y, &comp, 4);
       if (pixels == NULL || x != 3 || y != 2 || comp != 4) {
          if (pixels)
             exri_image_free(pixels);

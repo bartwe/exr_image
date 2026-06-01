@@ -31,6 +31,11 @@ cp README.md CONTRIBUTING.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md VERSION 
 cp docs/*.md "$STAGE/docs/"
 cp scripts/*.sh scripts/*.cmd "$STAGE/scripts/"
 cp tests/*.c tests/*.h "$STAGE/tests/"
+for reference_dir in tests/*_reference; do
+   if [ -d "$reference_dir" ]; then
+      cp -R "$reference_dir" "$STAGE/tests/"
+   fi
+done
 
 rm -f "$OUT_DIR/$PACKAGE.tar.gz" "$OUT_DIR/$PACKAGE.zip" "$OUT_DIR/exr_image.h" "$OUT_DIR/SHA256SUMS"
 cp exr_image.h "$OUT_DIR/exr_image.h"

@@ -54,6 +54,7 @@
 #ifndef EXRI_NO_STDIO
 #include <stdio.h>
 #endif
+#include <stddef.h>
 
 #define EXRI_VERSION 11
 
@@ -181,14 +182,14 @@ extern "C" {
 
 typedef struct
 {
-   int  (EXRI_CALLBACK *read) (void *user, char *data, int size);
-   void (EXRI_CALLBACK *skip) (void *user, int n);
+   int  (EXRI_CALLBACK *read) (void *user, void *data, size_t size, size_t *bytes_read);
+   int  (EXRI_CALLBACK *skip) (void *user, size_t n);
    int  (EXRI_CALLBACK *eof)  (void *user);
 } exri_io_callbacks;
 
 typedef struct
 {
-   int (EXRI_CALLBACK *write) (void *user, void const *data, int size);
+   int (EXRI_CALLBACK *write) (void *user, void const *data, size_t size);
 } exri_write_callbacks;
 
 typedef struct
@@ -228,68 +229,68 @@ typedef struct
    exri_write_options options;
 } exri_write_part;
 
-EXRIDEF int EXRI_CALL exri_is_exr_from_memory(exri_uc const *buffer, int len);
+EXRIDEF int EXRI_CALL exri_is_exr_from_memory(exri_uc const *buffer, size_t len);
 EXRIDEF int EXRI_CALL exri_is_exr_from_callbacks(exri_io_callbacks const *clbk, void *user);
-EXRIDEF int EXRI_CALL exri_version_from_memory(exri_uc const *buffer, int len, int *version, int *flags);
+EXRIDEF int EXRI_CALL exri_version_from_memory(exri_uc const *buffer, size_t len, int *version, int *flags);
 EXRIDEF int EXRI_CALL exri_version_from_callbacks(exri_io_callbacks const *clbk, void *user, int *version, int *flags);
-EXRIDEF int EXRI_CALL exri_info_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file);
+EXRIDEF int EXRI_CALL exri_info_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file);
 EXRIDEF int EXRI_CALL exri_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file);
 
-EXRIDEF int EXRI_CALL exri_part_count_from_memory(exri_uc const *buffer, int len, int *num_parts);
+EXRIDEF int EXRI_CALL exri_part_count_from_memory(exri_uc const *buffer, size_t len, int *num_parts);
 EXRIDEF int EXRI_CALL exri_part_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int *num_parts);
-EXRIDEF int EXRI_CALL exri_part_info_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file);
+EXRIDEF int EXRI_CALL exri_part_info_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file);
 EXRIDEF int EXRI_CALL exri_part_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *channels_in_file);
-EXRIDEF int EXRI_CALL exri_part_channel_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_channels);
+EXRIDEF int EXRI_CALL exri_part_channel_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_channels);
 EXRIDEF int EXRI_CALL exri_part_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_channels);
-EXRIDEF int EXRI_CALL exri_part_channel_name_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, char *name, int name_size);
+EXRIDEF int EXRI_CALL exri_part_channel_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, char *name, int name_size);
 EXRIDEF int EXRI_CALL exri_part_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, char *name, int name_size);
-EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *pixel_type);
+EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *pixel_type);
 EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *pixel_type);
-EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
+EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
 EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
-EXRIDEF int EXRI_CALL exri_part_attribute_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_attributes);
-EXRIDEF int EXRI_CALL exri_part_attribute_name_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, char *name, int name_size);
-EXRIDEF int EXRI_CALL exri_part_attribute_type_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, char *type, int type_size);
-EXRIDEF int EXRI_CALL exri_part_attribute_value_size_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, int *value_size);
-EXRIDEF int EXRI_CALL exri_part_attribute_value_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written);
-EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_x_levels, int *num_y_levels);
+EXRIDEF int EXRI_CALL exri_part_attribute_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_attributes);
+EXRIDEF int EXRI_CALL exri_part_attribute_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, char *name, int name_size);
+EXRIDEF int EXRI_CALL exri_part_attribute_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, char *type, int type_size);
+EXRIDEF int EXRI_CALL exri_part_attribute_value_size_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, int *value_size);
+EXRIDEF int EXRI_CALL exri_part_attribute_value_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written);
+EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_x_levels, int *num_y_levels);
 EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_x_levels, int *num_y_levels);
 
-EXRIDEF int EXRI_CALL exri_layer_count_from_memory(exri_uc const *buffer, int len, int *num_layers);
-EXRIDEF int EXRI_CALL exri_layer_name_from_memory(exri_uc const *buffer, int len, int layer_index, char *name, int name_size);
+EXRIDEF int EXRI_CALL exri_layer_count_from_memory(exri_uc const *buffer, size_t len, int *num_layers);
+EXRIDEF int EXRI_CALL exri_layer_name_from_memory(exri_uc const *buffer, size_t len, int layer_index, char *name, int name_size);
 
-EXRIDEF int EXRI_CALL exri_deep_part_info_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels, int *total_samples);
+EXRIDEF int EXRI_CALL exri_deep_part_info_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels, int *total_samples);
 EXRIDEF int EXRI_CALL exri_deep_part_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *num_channels, int *total_samples);
-EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_channels);
+EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_channels);
 EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_channels);
-EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, char *name, int name_size);
+EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, char *name, int name_size);
 EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, char *name, int name_size);
-EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *pixel_type);
+EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *pixel_type);
 EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *pixel_type);
-EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
+EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
 EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear);
-EXRIDEF int EXRI_CALL exri_load_deep_part_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels, int *total_samples);
+EXRIDEF int EXRI_CALL exri_load_deep_part_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels, int *total_samples);
 EXRIDEF int EXRI_CALL exri_load_deep_part_from_callbacks(float **out_samples, int **out_sample_offsets, exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *num_channels, int *total_samples);
 
-EXRIDEF int EXRI_CALL exri_loadf_from_memory(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_part_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_layer_from_memory(float **out_pixels, exri_uc const *buffer, int len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_layer_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_channels_from_memory(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *num_channels);
-EXRIDEF int EXRI_CALL exri_loadf_part_channels_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels);
-EXRIDEF int EXRI_CALL exri_loadf_channels_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels);
-EXRIDEF int EXRI_CALL exri_loadf_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, int len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
-EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_part_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_layer_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_layer_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_channels_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels);
+EXRIDEF int EXRI_CALL exri_loadf_part_channels_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels);
+EXRIDEF int EXRI_CALL exri_loadf_channels_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels);
+EXRIDEF int EXRI_CALL exri_loadf_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
+EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
 EXRIDEF int EXRI_CALL exri_loadf_from_callbacks(float **out_pixels, exri_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
 EXRIDEF int EXRI_CALL exri_loadf_part_from_callbacks(float **out_pixels, exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags);
 
-EXRIDEF int EXRI_CALL exri_writef_to_memory(exri_uc **out_data, int *out_len, int w, int h, int comp, float const *data, exri_write_options const *options);
+EXRIDEF int EXRI_CALL exri_writef_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int comp, float const *data, exri_write_options const *options);
 EXRIDEF int EXRI_CALL exri_writef_to_callbacks(exri_write_callbacks const *clbk, void *user, int w, int h, int comp, float const *data, exri_write_options const *options);
-EXRIDEF int EXRI_CALL exri_writef_channels_to_memory(exri_uc **out_data, int *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options);
+EXRIDEF int EXRI_CALL exri_writef_channels_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options);
 EXRIDEF int EXRI_CALL exri_writef_channels_to_callbacks(exri_write_callbacks const *clbk, void *user, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options);
-EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, int *out_len, exri_write_part const *parts, int num_parts);
+EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, size_t *out_len, exri_write_part const *parts, int num_parts);
 EXRIDEF int EXRI_CALL exri_writef_multipart_to_callbacks(exri_write_callbacks const *clbk, void *user, exri_write_part const *parts, int num_parts);
 
 EXRIDEF int EXRI_CALL exri_format_wavelength(char *buffer, int buffer_size, float wavelength_nm);
@@ -298,16 +299,21 @@ EXRIDEF int EXRI_CALL exri_make_reflective_spectral_channel_name(char *buffer, i
 EXRIDEF float EXRI_CALL exri_parse_spectral_wavelength(char const *channel_name);
 EXRIDEF int EXRI_CALL exri_spectral_stokes_component(char const *channel_name);
 EXRIDEF int EXRI_CALL exri_is_spectral_channel_name(char const *channel_name);
-EXRIDEF int EXRI_CALL exri_is_spectral_from_memory(exri_uc const *buffer, int len);
+EXRIDEF int EXRI_CALL exri_is_spectral_from_memory(exri_uc const *buffer, size_t len);
 EXRIDEF int EXRI_CALL exri_is_spectral_from_callbacks(exri_io_callbacks const *clbk, void *user);
-EXRIDEF int EXRI_CALL exri_spectrum_type_from_memory(exri_uc const *buffer, int len, int *spectrum_type);
+EXRIDEF int EXRI_CALL exri_spectrum_type_from_memory(exri_uc const *buffer, size_t len, int *spectrum_type);
 EXRIDEF int EXRI_CALL exri_spectrum_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int *spectrum_type);
-EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_memory(exri_uc const *buffer, int len, float *wavelengths, int max_wavelengths, int *num_wavelengths);
+EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_memory(exri_uc const *buffer, size_t len, float *wavelengths, int max_wavelengths, int *num_wavelengths);
 EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_callbacks(exri_io_callbacks const *clbk, void *user, float *wavelengths, int max_wavelengths, int *num_wavelengths);
-EXRIDEF int EXRI_CALL exri_spectral_units_from_memory(exri_uc const *buffer, int len, char *units, int units_size);
+EXRIDEF int EXRI_CALL exri_spectral_units_from_memory(exri_uc const *buffer, size_t len, char *units, int units_size);
 EXRIDEF int EXRI_CALL exri_spectral_units_from_callbacks(exri_io_callbacks const *clbk, void *user, char *units, int units_size);
 
 #ifndef EXRI_NO_STDIO
+/* Filename helpers open/read/close the named path for each call. Do not use a
+   prior metadata call such as exri_info(filename) as a security decision for a
+   later load/write of the same path; the file can be replaced between calls.
+   Security-sensitive callers should open/authorize/read once, then use the
+   memory or callback APIs on that same object. */
 EXRIDEF int EXRI_CALL exri_is_exr(char const *filename);
 EXRIDEF int EXRI_CALL exri_version(char const *filename, int *version, int *flags);
 EXRIDEF int EXRI_CALL exri_info(char const *filename, int *x, int *y, int *channels_in_file);
@@ -391,15 +397,15 @@ EXRIDEF void EXRI_CALL exri_image_free(void *retval_from_exri_load);
 #endif
 
 #ifndef EXRI_MAX_INPUT_SIZE
-#define EXRI_MAX_INPUT_SIZE (256 * 1024 * 1024)
+#define EXRI_MAX_INPUT_SIZE ((size_t) -1)
 #endif
 
 #ifndef EXRI_MAX_OUTPUT_SIZE
-#define EXRI_MAX_OUTPUT_SIZE (256 * 1024 * 1024)
+#define EXRI_MAX_OUTPUT_SIZE ((size_t) -1)
 #endif
 
 #ifndef EXRI_MAX_PIXELS
-#define EXRI_MAX_PIXELS (1 << 28)
+#define EXRI_MAX_PIXELS (((size_t) -1) / (4u * sizeof(float)))
 #endif
 
 #ifndef EXRI_THREAD_LOCAL
@@ -433,8 +439,8 @@ typedef unsigned char exri__validate_float32[sizeof(float) == 4 ? 1 : -1];
 typedef struct
 {
    exri_uc const *data;
-   int size;
-   int pos;
+   size_t size;
+   size_t pos;
 } exri__context;
 
 typedef struct
@@ -445,7 +451,7 @@ typedef struct
    int num_channel_records;
    int compression;
    int line_order;
-   int header_end;
+   size_t header_end;
    int chunk_count;
    int tiled;
    int tile_width;
@@ -494,8 +500,8 @@ typedef struct
 
 typedef struct
 {
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
    int chunk_count;
    int chunk_count_found;
    int tiled;
@@ -545,6 +551,13 @@ static int exri__err_invalid(void)
    return exri__err("invalid EXR");
 }
 
+static int exri__check_input_size(size_t len)
+{
+   if (EXRI_MAX_INPUT_SIZE > 0 && len > EXRI_MAX_INPUT_SIZE)
+      return exri__err("input too large");
+   return 1;
+}
+
 static int exri__has_bytes_at(int pos, int size, int count)
 {
    if (pos < 0 || size < 0 || count < 0 || pos > size)
@@ -552,14 +565,21 @@ static int exri__has_bytes_at(int pos, int size, int count)
    return (size_t) count <= (size_t) size - (size_t) pos;
 }
 
-static int exri__has_offset_table_entry(int table_pos, int index, int size)
+static int exri__has_file_bytes_at(size_t pos, size_t size, size_t count)
 {
-   int entry_end;
-
-   if (table_pos < 0 || index < 0 || index > (INT_MAX - 8) / 8)
+   if (pos > size)
       return 0;
-   entry_end = index * 8 + 8;
-   return exri__has_bytes_at(table_pos, size, entry_end);
+   return count <= size - pos;
+}
+
+static int exri__has_offset_table_entry(size_t table_pos, int index, size_t size)
+{
+   size_t entry_end;
+
+   if (index < 0 || (size_t) index > (((size_t) -1) - 8u) / 8u)
+      return 0;
+   entry_end = (size_t) index * 8u + 8u;
+   return exri__has_file_bytes_at(table_pos, size, entry_end);
 }
 
 EXRIDEF char const * EXRI_CALL exri_failure_reason(void)
@@ -602,24 +622,29 @@ static void exri__put32le_at(exri_uc *p, exri__uint32 v)
    p[3] = (exri_uc) ((v >> 24) & 255u);
 }
 
-static void exri__put64le_int_at(exri_uc *p, int v)
+static void exri__put64le_size_at(exri_uc *p, size_t v)
 {
-   exri__put32le_at(p, (exri__uint32) v);
-   exri__put32le_at(p + 4, 0);
+   exri__uint64 value;
+
+   value = (exri__uint64) v;
+   exri__put32le_at(p, (exri__uint32) (value & 0xffffffffu));
+   exri__put32le_at(p + 4, (exri__uint32) (value >> 32));
 }
 
-static int exri__get64le_as_int_at(exri_uc const *p, int *out)
+static int exri__get64le_as_size_at(exri_uc const *p, size_t *out)
 {
    exri__uint32 low;
    exri__uint32 high;
+   exri__uint64 value;
 
    low = exri__get32le_at(p);
    high = exri__get32le_at(p + 4);
+   value = ((exri__uint64) high << 32) | (exri__uint64) low;
 
-   if (high != 0 || low > (exri__uint32) INT_MAX)
+   if (value > (exri__uint64) ((size_t) -1))
       return 0;
 
-   *out = (int) low;
+   *out = (size_t) value;
    return 1;
 }
 
@@ -1176,11 +1201,9 @@ static int exri__zlib_decode_buffer(exri_uc *dst, int dst_len, exri_uc const *sr
    return dst_pos;
 }
 
-static int exri__require(exri__context *s, int n)
+static int exri__require(exri__context *s, size_t n)
 {
-   if (n < 0)
-      return 0;
-   if (s->pos < 0 || s->pos > s->size)
+   if (s->pos > s->size)
       return 0;
    if (n > s->size - s->pos)
       return 0;
@@ -1198,7 +1221,8 @@ static int exri__read_u32(exri__context *s, exri__uint32 *out)
 
 static int exri__read_cstring(exri__context *s, char const **out, int *len)
 {
-   int start;
+   size_t start;
+   size_t string_len;
 
    if (!exri__require(s, 1))
       return 0;
@@ -1206,8 +1230,11 @@ static int exri__read_cstring(exri__context *s, char const **out, int *len)
    start = s->pos;
    while (s->pos < s->size) {
       if (s->data[s->pos] == 0) {
+         string_len = s->pos - start;
+         if (string_len > (size_t) INT_MAX)
+            return 0;
          *out = (char const *) (s->data + start);
-         *len = s->pos - start;
+         *len = (int) string_len;
          s->pos += 1;
          return 1;
       }
@@ -1440,14 +1467,14 @@ fail:
    return 0;
 }
 
-static int exri__parse_header(exri_uc const *buffer, int len, exri__info *info, exri__channel **channels)
+static int exri__parse_header(exri_uc const *buffer, size_t len, exri__info *info, exri__channel **channels)
 {
    exri__context s;
    char const *name;
    char const *type;
    int name_len;
    int type_len;
-   int value_pos;
+   size_t value_pos;
    int value_size;
    int i;
    exri__uint32 version_field;
@@ -1459,6 +1486,9 @@ static int exri__parse_header(exri_uc const *buffer, int len, exri__info *info, 
 
    if (buffer == NULL || len < 8)
       return exri__err_invalid();
+
+   if (!exri__check_input_size(len))
+      return 0;
 
    if (buffer[0] != 0x76 || buffer[1] != 0x2f || buffer[2] != 0x31 || buffer[3] != 0x01)
       return exri__err_invalid();
@@ -1497,7 +1527,7 @@ static int exri__parse_header(exri_uc const *buffer, int len, exri__info *info, 
          return exri__err_invalid();
 
       value_size = (int) attr_size;
-      if (!exri__require(&s, value_size))
+      if (!exri__require(&s, (size_t) value_size))
          return exri__err_invalid();
 
       value_pos = s.pos;
@@ -1566,7 +1596,7 @@ static int exri__parse_header(exri_uc const *buffer, int len, exri__info *info, 
          info->chromaticities_found = 1;
       }
 
-      s.pos = value_pos + value_size;
+      s.pos = value_pos + (size_t) value_size;
    }
 
    info->header_end = s.pos;
@@ -1600,13 +1630,13 @@ static int exri__parse_header(exri_uc const *buffer, int len, exri__info *info, 
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_is_exr_from_memory(exri_uc const *buffer, int len)
+EXRIDEF int EXRI_CALL exri_is_exr_from_memory(exri_uc const *buffer, size_t len)
 {
    exri__info info;
    return exri__parse_header(buffer, len, &info, NULL);
 }
 
-EXRIDEF int EXRI_CALL exri_info_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file)
+EXRIDEF int EXRI_CALL exri_info_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file)
 {
    exri__info info;
 
@@ -1773,7 +1803,7 @@ static int exri__copy_name_to_buffer(exri_uc const *src, int src_len, char *name
    return src_len;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_memory(exri_uc const *buffer, int len, int *num_channels)
+EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_memory(exri_uc const *buffer, size_t len, int *num_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -1798,7 +1828,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_memory(exri_uc const *buf
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_memory(exri_uc const *buffer, int len, int channel_index, char *name, int name_size)
+EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_memory(exri_uc const *buffer, size_t len, int channel_index, char *name, int name_size)
 {
    exri__info info;
    exri__channel *channels;
@@ -1827,7 +1857,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_memory(exri_uc const *buff
    return result;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int channel_index, int *pixel_type)
+EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int channel_index, int *pixel_type)
 {
    exri__info info;
    exri__channel *channels;
@@ -1876,7 +1906,7 @@ static void exri__set_channel_sampling(exri__channel const *channel, int *x_samp
       *p_linear = channel->p_linear;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_memory(exri_uc const *buffer, int len, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
+EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri__info info;
    exri__channel *channels;
@@ -1905,7 +1935,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_memory(exri_uc const *
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_layer_count_from_memory(exri_uc const *buffer, int len, int *num_layers)
+EXRIDEF int EXRI_CALL exri_layer_count_from_memory(exri_uc const *buffer, size_t len, int *num_layers)
 {
    exri__info info;
    exri__channel *channels;
@@ -1930,7 +1960,7 @@ EXRIDEF int EXRI_CALL exri_layer_count_from_memory(exri_uc const *buffer, int le
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_layer_name_from_memory(exri_uc const *buffer, int len, int layer_index, char *name, int name_size)
+EXRIDEF int EXRI_CALL exri_layer_name_from_memory(exri_uc const *buffer, size_t len, int layer_index, char *name, int name_size)
 {
    exri__info info;
    exri__channel *channels;
@@ -1962,7 +1992,7 @@ EXRIDEF int EXRI_CALL exri_layer_name_from_memory(exri_uc const *buffer, int len
    return i;
 }
 
-static int exri__parse_header_for_attributes(exri_uc const *buffer, int len, exri__info *info)
+static int exri__parse_header_for_attributes(exri_uc const *buffer, size_t len, exri__info *info)
 {
    exri__channel *channels;
 
@@ -1979,18 +2009,18 @@ static int exri__parse_header_for_attributes(exri_uc const *buffer, int len, exr
    return 1;
 }
 
-static int exri__version_field_from_memory(exri_uc const *buffer, int len, exri__uint32 *version_field);
-static int exri__is_multipart_memory(exri_uc const *buffer, int len, int *is_multipart);
-static int exri__multipart_find_part(exri_uc const *buffer, int len, int part_index, exri__multipart_part_ref *part, int *tables_start, int *part_table_start, int *num_parts);
+static int exri__version_field_from_memory(exri_uc const *buffer, size_t len, exri__uint32 *version_field);
+static int exri__is_multipart_memory(exri_uc const *buffer, size_t len, int *is_multipart);
+static int exri__multipart_find_part(exri_uc const *buffer, size_t len, int part_index, exri__multipart_part_ref *part, size_t *tables_start, size_t *part_table_start, int *num_parts);
 
-static int exri__attribute_by_index_in_header(exri_uc const *buffer, int header_start, int header_end, int attribute_index, exri__attribute_ref *attribute, int *count_out)
+static int exri__attribute_by_index_in_header(exri_uc const *buffer, size_t header_start, size_t header_end, int attribute_index, exri__attribute_ref *attribute, int *count_out)
 {
    exri__context s;
    char const *name;
    char const *type;
    int name_len;
    int type_len;
-   int value_pos;
+   size_t value_pos;
    int value_size;
    int count;
    exri__uint32 attr_size;
@@ -1999,7 +2029,7 @@ static int exri__attribute_by_index_in_header(exri_uc const *buffer, int header_
       return exri__err("invalid argument");
    if (attribute_index >= 0 && attribute == NULL)
       return exri__err("invalid argument");
-   if (buffer == NULL || header_start < 0 || header_end < header_start)
+   if (buffer == NULL || header_end < header_start)
       return exri__err_invalid();
 
    s.data = buffer;
@@ -2027,7 +2057,7 @@ static int exri__attribute_by_index_in_header(exri_uc const *buffer, int header_
          return exri__err_invalid();
 
       value_size = (int) attr_size;
-      if (!exri__require(&s, value_size))
+      if (!exri__require(&s, (size_t) value_size))
          return exri__err_invalid();
       value_pos = s.pos;
 
@@ -2044,16 +2074,16 @@ static int exri__attribute_by_index_in_header(exri_uc const *buffer, int header_
       }
 
       count += 1;
-      s.pos = value_pos + value_size;
+      s.pos = value_pos + (size_t) value_size;
    }
 }
 
-static int exri__attribute_by_index(exri_uc const *buffer, int header_end, int attribute_index, exri__attribute_ref *attribute, int *count_out)
+static int exri__attribute_by_index(exri_uc const *buffer, size_t header_end, int attribute_index, exri__attribute_ref *attribute, int *count_out)
 {
-   return exri__attribute_by_index_in_header(buffer, 8, header_end, attribute_index, attribute, count_out);
+   return exri__attribute_by_index_in_header(buffer, 8u, header_end, attribute_index, attribute, count_out);
 }
 
-static int exri__part_attribute_header_bounds(exri_uc const *buffer, int len, int part_index, int *header_start, int *header_end)
+static int exri__part_attribute_header_bounds(exri_uc const *buffer, size_t len, int part_index, size_t *header_start, size_t *header_end)
 {
    exri__uint32 version_field;
    exri__info info;
@@ -2084,7 +2114,7 @@ static int exri__part_attribute_header_bounds(exri_uc const *buffer, int len, in
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count_from_memory(exri_uc const *buffer, int len, int *num_attributes)
+EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count_from_memory(exri_uc const *buffer, size_t len, int *num_attributes)
 {
    exri__info info;
 
@@ -2098,10 +2128,10 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count_from_memory(exri_uc const *b
    return exri__attribute_by_index(buffer, info.header_end, -1, NULL, num_attributes);
 }
 
-EXRIDEF int EXRI_CALL exri_part_attribute_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_attributes)
+EXRIDEF int EXRI_CALL exri_part_attribute_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_attributes)
 {
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
 
    if (num_attributes == NULL)
       return exri__err("invalid argument");
@@ -2113,7 +2143,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_count_from_memory(exri_uc const *buffe
    return exri__attribute_by_index_in_header(buffer, header_start, header_end, -1, NULL, num_attributes);
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name_from_memory(exri_uc const *buffer, int len, int attribute_index, char *name, int name_size)
+EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name_from_memory(exri_uc const *buffer, size_t len, int attribute_index, char *name, int name_size)
 {
    exri__info info;
    exri__attribute_ref attribute;
@@ -2128,11 +2158,11 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name_from_memory(exri_uc const *bu
    return exri__copy_name_to_buffer(attribute.name, attribute.name_len, name, name_size);
 }
 
-EXRIDEF int EXRI_CALL exri_part_attribute_name_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, char *name, int name_size)
+EXRIDEF int EXRI_CALL exri_part_attribute_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, char *name, int name_size)
 {
    exri__attribute_ref attribute;
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
 
    if (attribute_index < 0)
       return exri__err("invalid argument");
@@ -2144,7 +2174,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_name_from_memory(exri_uc const *buffer
    return exri__copy_name_to_buffer(attribute.name, attribute.name_len, name, name_size);
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type_from_memory(exri_uc const *buffer, int len, int attribute_index, char *type, int type_size)
+EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type_from_memory(exri_uc const *buffer, size_t len, int attribute_index, char *type, int type_size)
 {
    exri__info info;
    exri__attribute_ref attribute;
@@ -2159,11 +2189,11 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type_from_memory(exri_uc const *bu
    return exri__copy_name_to_buffer(attribute.type, attribute.type_len, type, type_size);
 }
 
-EXRIDEF int EXRI_CALL exri_part_attribute_type_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, char *type, int type_size)
+EXRIDEF int EXRI_CALL exri_part_attribute_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, char *type, int type_size)
 {
    exri__attribute_ref attribute;
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
 
    if (attribute_index < 0)
       return exri__err("invalid argument");
@@ -2175,7 +2205,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_type_from_memory(exri_uc const *buffer
    return exri__copy_name_to_buffer(attribute.type, attribute.type_len, type, type_size);
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size_from_memory(exri_uc const *buffer, int len, int attribute_index, int *value_size)
+EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size_from_memory(exri_uc const *buffer, size_t len, int attribute_index, int *value_size)
 {
    exri__info info;
    exri__attribute_ref attribute;
@@ -2193,11 +2223,11 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size_from_memory(exri_uc con
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_attribute_value_size_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, int *value_size)
+EXRIDEF int EXRI_CALL exri_part_attribute_value_size_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, int *value_size)
 {
    exri__attribute_ref attribute;
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
 
    if (attribute_index < 0 || value_size == NULL)
       return exri__err("invalid argument");
@@ -2212,7 +2242,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_value_size_from_memory(exri_uc const *
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_from_memory(exri_uc const *buffer, int len, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
+EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_from_memory(exri_uc const *buffer, size_t len, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
 {
    exri__info info;
    exri__attribute_ref attribute;
@@ -2238,11 +2268,11 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_from_memory(exri_uc const *b
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_attribute_value_from_memory(exri_uc const *buffer, int len, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
+EXRIDEF int EXRI_CALL exri_part_attribute_value_from_memory(exri_uc const *buffer, size_t len, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
 {
    exri__attribute_ref attribute;
-   int header_start;
-   int header_end;
+   size_t header_start;
+   size_t header_end;
 
    if (attribute_index < 0 || bytes_written == NULL)
       return exri__err("invalid argument");
@@ -2285,18 +2315,18 @@ static int exri__attribute_type_matches(exri__attribute_ref const *attribute, ch
    return attribute->type_len == len && memcmp(attribute->type, type, (size_t) len) == 0;
 }
 
-static int exri__find_attribute_by_name_in_header(exri_uc const *buffer, int header_start, int header_end, char const *name, exri__attribute_ref *attribute)
+static int exri__find_attribute_by_name_in_header(exri_uc const *buffer, size_t header_start, size_t header_end, char const *name, exri__attribute_ref *attribute)
 {
    exri__context s;
    char const *attr_name;
    char const *type;
    int attr_name_len;
    int type_len;
-   int value_pos;
+   size_t value_pos;
    int value_size;
    exri__uint32 attr_size;
 
-   if (buffer == NULL || header_start < 0 || header_end < header_start || name == NULL || attribute == NULL)
+   if (buffer == NULL || header_end < header_start || name == NULL || attribute == NULL)
       return 0;
 
    s.data = buffer;
@@ -2313,7 +2343,7 @@ static int exri__find_attribute_by_name_in_header(exri_uc const *buffer, int hea
       if (!exri__read_u32(&s, &attr_size) || attr_size > (exri__uint32) INT_MAX)
          return 0;
       value_size = (int) attr_size;
-      if (!exri__require(&s, value_size))
+      if (!exri__require(&s, (size_t) value_size))
          return 0;
       value_pos = s.pos;
 
@@ -2326,18 +2356,18 @@ static int exri__find_attribute_by_name_in_header(exri_uc const *buffer, int hea
       if (exri__attribute_name_matches(attribute, name))
          return 1;
 
-      s.pos = value_pos + value_size;
+      s.pos = value_pos + (size_t) value_size;
    }
 
    return 0;
 }
 
-static int exri__find_attribute_by_name(exri_uc const *buffer, int header_end, char const *name, exri__attribute_ref *attribute)
+static int exri__find_attribute_by_name(exri_uc const *buffer, size_t header_end, char const *name, exri__attribute_ref *attribute)
 {
-   return exri__find_attribute_by_name_in_header(buffer, 8, header_end, name, attribute);
+   return exri__find_attribute_by_name_in_header(buffer, 8u, header_end, name, attribute);
 }
 
-static int exri__part_channels_from_memory(exri_uc const *buffer, int len, int part_index, int *num_channels, exri__channel **channels_out)
+static int exri__part_channels_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_channels, exri__channel **channels_out)
 {
    exri__info info;
    exri__channel *channels;
@@ -2404,7 +2434,7 @@ static int exri__part_channels_from_memory(exri_uc const *buffer, int len, int p
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_channel_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_channels)
+EXRIDEF int EXRI_CALL exri_part_channel_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_channels)
 {
    exri__channel *channels;
    int result;
@@ -2419,7 +2449,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_count_from_memory(exri_uc const *buffer,
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_part_channel_name_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, char *name, int name_size)
+EXRIDEF int EXRI_CALL exri_part_channel_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, char *name, int name_size)
 {
    exri__channel *channels;
    int num_channels;
@@ -2441,7 +2471,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_name_from_memory(exri_uc const *buffer, 
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *pixel_type)
+EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *pixel_type)
 {
    exri__channel *channels;
    int num_channels;
@@ -2463,7 +2493,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_memory(exri_uc const *bu
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
+EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri__channel *channels;
    int num_channels;
@@ -3723,6 +3753,10 @@ static int exri__unb44_exr_block(exri_uc *dst, int uncompressed_size, exri_uc co
    expected_len = num_lines * row_bytes;
    if (expected_len != uncompressed_size)
       return exri__err("bad b44 data");
+   if (src_size == uncompressed_size) {
+      memcpy(dst, src, (size_t) uncompressed_size);
+      return 1;
+   }
 
    in_pos = 0;
    for (c = 0; c < num_channels; ++c) {
@@ -4705,7 +4739,7 @@ static int exri__tiled_level_available(exri__info const *info, int level_x, int 
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_memory(exri_uc const *buffer, int len, int *num_x_levels, int *num_y_levels)
+EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_memory(exri_uc const *buffer, size_t len, int *num_x_levels, int *num_y_levels)
 {
    exri__info info;
    exri__channel *channels;
@@ -4736,7 +4770,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_memory(exri_uc const 
    return 1;
 }
 
-static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *info, exri__channel const *channels, int num_channels, exri_uc const *buffer, int len, char const *layer, int layer_len, int target_level_x, int target_level_y, int region_x, int region_y, int region_w, int region_h)
+static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *info, exri__channel const *channels, int num_channels, exri_uc const *buffer, size_t len, char const *layer, int layer_len, int target_level_x, int target_level_y, int region_x, int region_y, int region_w, int region_h)
 {
    exri_uc *scratch;
    exri_uc const *pixel_data;
@@ -4754,7 +4788,7 @@ static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *
    int level_count_x;
    int level_count_y;
    int offset_index;
-   int chunk_offset;
+   size_t chunk_offset;
    int data_len;
    int tile_x;
    int tile_y;
@@ -4799,7 +4833,7 @@ static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *
 
    if (info->chunk_count_found && info->chunk_count != total_tiles)
       return exri__err("invalid chunk count");
-   if (info->header_end < 0 || info->header_end > len || total_tiles > (len - info->header_end) / 8)
+   if (info->header_end > len || ((size_t) total_tiles) > (len - info->header_end) / 8u)
       return exri__err_invalid();
 
    offset_index = 0;
@@ -4821,12 +4855,12 @@ static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *
 
          for (ty = 0; ty < num_y_tiles; ++ty) {
             for (tx = 0; tx < num_x_tiles; ++tx) {
-               if (!exri__get64le_as_int_at(buffer + info->header_end + offset_index * 8, &chunk_offset)) {
+               if (!exri__get64le_as_size_at(buffer + info->header_end + (size_t) offset_index * 8u, &chunk_offset)) {
                   exri__err_invalid();
                   goto fail;
                }
                offset_index += 1;
-               if (!exri__has_bytes_at(chunk_offset, len, 20)) {
+               if (!exri__has_file_bytes_at(chunk_offset, len, 20)) {
                   exri__err_invalid();
                   goto fail;
                }
@@ -4840,7 +4874,7 @@ static int exri__loadf_tiled_blocks(float *out, int out_comp, exri__info const *
                   goto fail;
                }
                data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 16));
-               if (data_len <= 0 || data_len > len - (chunk_offset + 20)) {
+               if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 20u)) {
                   exri__err_invalid();
                   goto fail;
                }
@@ -4916,7 +4950,7 @@ fail:
    return 0;
 }
 
-static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info, exri__channel const *channels, int num_channels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h)
+static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info, exri__channel const *channels, int num_channels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h)
 {
    exri_uc *scratch;
    exri_uc const *pixel_data;
@@ -4933,7 +4967,7 @@ static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info,
    int level_count_x;
    int level_count_y;
    int offset_index;
-   int chunk_offset;
+   size_t chunk_offset;
    int data_len;
    int tile_x;
    int tile_y;
@@ -4978,7 +5012,7 @@ static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info,
 
    if (info->chunk_count_found && info->chunk_count != total_tiles)
       return exri__err("invalid chunk count");
-   if (info->header_end < 0 || info->header_end > len || total_tiles > (len - info->header_end) / 8)
+   if (info->header_end > len || ((size_t) total_tiles) > (len - info->header_end) / 8u)
       return exri__err_invalid();
 
    offset_index = 0;
@@ -5000,12 +5034,12 @@ static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info,
 
          for (ty = 0; ty < num_y_tiles; ++ty) {
             for (tx = 0; tx < num_x_tiles; ++tx) {
-               if (!exri__get64le_as_int_at(buffer + info->header_end + offset_index * 8, &chunk_offset)) {
+               if (!exri__get64le_as_size_at(buffer + info->header_end + (size_t) offset_index * 8u, &chunk_offset)) {
                   exri__err_invalid();
                   goto fail;
                }
                offset_index += 1;
-               if (!exri__has_bytes_at(chunk_offset, len, 20)) {
+               if (!exri__has_file_bytes_at(chunk_offset, len, 20)) {
                   exri__err_invalid();
                   goto fail;
                }
@@ -5019,7 +5053,7 @@ static int exri__loadf_channels_tiled_blocks(float *out, exri__info const *info,
                   goto fail;
                }
                data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 16));
-               if (data_len <= 0 || data_len > len - (chunk_offset + 20)) {
+               if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 20u)) {
                   exri__err_invalid();
                   goto fail;
                }
@@ -5092,7 +5126,7 @@ fail:
    return 0;
 }
 
-static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_main_layer(exri_uc const *buffer, size_t len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -5108,7 +5142,7 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
    int i;
    int data_len;
    int line_y;
-   int chunk_offset;
+   size_t chunk_offset;
    int block_index;
    int y_rel;
    int seen_count;
@@ -5224,7 +5258,7 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
       return NULL;
    }
 
-   if (info.header_end < 0 || num_blocks < 0 || num_blocks > (len - info.header_end) / 8) {
+   if (num_blocks < 0 || info.header_end > len || ((size_t) num_blocks) > (len - info.header_end) / 8u) {
       EXRI_FREE(out);
       EXRI_FREE(channels);
       exri__err_invalid();
@@ -5242,7 +5276,7 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
    seen_count = 0;
 
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info.header_end + i * 8, &chunk_offset)) {
+      if (!exri__get64le_as_size_at(buffer + info.header_end + (size_t) i * 8u, &chunk_offset)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5250,7 +5284,7 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
          return NULL;
       }
 
-      if (!exri__has_bytes_at(chunk_offset, len, 8)) {
+      if (!exri__has_file_bytes_at(chunk_offset, len, 8)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5260,7 +5294,7 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
 
       line_y = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset));
       data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 4));
-      if (data_len <= 0 || data_len > len - (chunk_offset + 8)) {
+      if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5360,12 +5394,12 @@ static float *exri__loadf_main_layer(exri_uc const *buffer, int len, char const 
    return out;
 }
 
-static float *exri__loadf_main(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_main(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_main_layer(buffer, len, NULL, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_region_main_layer(exri_uc const *buffer, size_t len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -5381,7 +5415,7 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
    int i;
    int data_len;
    int line_y;
-   int chunk_offset;
+   size_t chunk_offset;
    int block_index;
    int y_rel;
    int seen_count;
@@ -5504,7 +5538,7 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
       return NULL;
    }
 
-   if (info.header_end < 0 || num_blocks < 0 || num_blocks > (len - info.header_end) / 8) {
+   if (num_blocks < 0 || info.header_end > len || ((size_t) num_blocks) > (len - info.header_end) / 8u) {
       EXRI_FREE(out);
       EXRI_FREE(channels);
       exri__err_invalid();
@@ -5522,7 +5556,7 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
    seen_count = 0;
 
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info.header_end + i * 8, &chunk_offset)) {
+      if (!exri__get64le_as_size_at(buffer + info.header_end + (size_t) i * 8u, &chunk_offset)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5530,7 +5564,7 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
          return NULL;
       }
 
-      if (!exri__has_bytes_at(chunk_offset, len, 8)) {
+      if (!exri__has_file_bytes_at(chunk_offset, len, 8)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5540,7 +5574,7 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
 
       line_y = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset));
       data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 4));
-      if (data_len <= 0 || data_len > len - (chunk_offset + 8)) {
+      if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5640,12 +5674,12 @@ static float *exri__loadf_region_main_layer(exri_uc const *buffer, int len, char
    return out;
 }
 
-static float *exri__loadf_region_main(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_region_main(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_region_main_layer(buffer, len, NULL, region_x, region_y, region_w, region_h, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, int *y, int *num_channels_out)
+static float *exri__loadf_channels_main(exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels_out)
 {
    exri__info info;
    exri__channel *channels;
@@ -5658,7 +5692,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
    int i;
    int data_len;
    int line_y;
-   int chunk_offset;
+   size_t chunk_offset;
    int block_index;
    int y_rel;
    int seen_count;
@@ -5756,7 +5790,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
       return NULL;
    }
 
-   if (info.header_end < 0 || num_blocks < 0 || num_blocks > (len - info.header_end) / 8) {
+   if (num_blocks < 0 || info.header_end > len || ((size_t) num_blocks) > (len - info.header_end) / 8u) {
       EXRI_FREE(out);
       EXRI_FREE(channels);
       exri__err_invalid();
@@ -5774,7 +5808,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
    seen_count = 0;
 
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info.header_end + i * 8, &chunk_offset)) {
+      if (!exri__get64le_as_size_at(buffer + info.header_end + (size_t) i * 8u, &chunk_offset)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5782,7 +5816,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
          return NULL;
       }
 
-      if (!exri__has_bytes_at(chunk_offset, len, 8)) {
+      if (!exri__has_file_bytes_at(chunk_offset, len, 8)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5792,7 +5826,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
 
       line_y = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset));
       data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 4));
-      if (data_len <= 0 || data_len > len - (chunk_offset + 8)) {
+      if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -5892,7 +5926,7 @@ static float *exri__loadf_channels_main(exri_uc const *buffer, int len, int *x, 
    return out;
 }
 
-static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels_out)
+static float *exri__loadf_channels_region_main(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels_out)
 {
    exri__info info;
    exri__channel *channels;
@@ -5905,7 +5939,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
    int i;
    int data_len;
    int line_y;
-   int chunk_offset;
+   size_t chunk_offset;
    int block_index;
    int y_rel;
    int seen_count;
@@ -6010,7 +6044,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
       return NULL;
    }
 
-   if (info.header_end < 0 || num_blocks < 0 || num_blocks > (len - info.header_end) / 8) {
+   if (num_blocks < 0 || info.header_end > len || ((size_t) num_blocks) > (len - info.header_end) / 8u) {
       EXRI_FREE(out);
       EXRI_FREE(channels);
       exri__err_invalid();
@@ -6028,7 +6062,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
    seen_count = 0;
 
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info.header_end + i * 8, &chunk_offset)) {
+      if (!exri__get64le_as_size_at(buffer + info.header_end + (size_t) i * 8u, &chunk_offset)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -6036,7 +6070,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
          return NULL;
       }
 
-      if (!exri__has_bytes_at(chunk_offset, len, 8)) {
+      if (!exri__has_file_bytes_at(chunk_offset, len, 8)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -6046,7 +6080,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
 
       line_y = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset));
       data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 4));
-      if (data_len <= 0 || data_len > len - (chunk_offset + 8)) {
+      if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u)) {
          EXRI_FREE(out);
          EXRI_FREE(seen_blocks);
          EXRI_FREE(channels);
@@ -6146,7 +6180,7 @@ static float *exri__loadf_channels_region_main(exri_uc const *buffer, int len, i
    return out;
 }
 
-static float *exri__loadf_tiled_level_main(exri_uc const *buffer, int len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_tiled_level_main(exri_uc const *buffer, size_t len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -6245,7 +6279,7 @@ static float *exri__loadf_tiled_level_main(exri_uc const *buffer, int len, int l
    return out;
 }
 
-static float *exri__loadf_tiled_level_region_main(exri_uc const *buffer, int len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_tiled_level_region_main(exri_uc const *buffer, size_t len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -6525,7 +6559,7 @@ static int exri__has_rgb_channels_for_layer(exri__channel const *channels, int n
    return has_r && has_g && has_b;
 }
 
-static int exri__prepare_scrgb_for_layer(exri_uc const *buffer, int len, char const *layer, int desired_channels, int color_flags, int *out_comp, int *apply_transform, double transform[9])
+static int exri__prepare_scrgb_for_layer(exri_uc const *buffer, size_t len, char const *layer, int desired_channels, int color_flags, int *out_comp, int *apply_transform, double transform[9])
 {
    exri__info info;
    exri__channel *channels;
@@ -6608,7 +6642,7 @@ static void exri__apply_scrgb_transform(float *pixels, int width, int height, in
    }
 }
 
-static float *exri__loadf_scrgb_main(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
+static float *exri__loadf_scrgb_main(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    float *pixels;
    double transform[9];
@@ -6654,52 +6688,52 @@ static int exri__load_flags_to_color_flags(int load_flags, int *color_flags)
    return exri__err("invalid load flags");
 }
 
-static float *exri__loadf_from_memory_ptr(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_from_memory_ptr(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_main(buffer, len, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_layer_from_memory_ptr(exri_uc const *buffer, int len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_layer_from_memory_ptr(exri_uc const *buffer, size_t len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_main_layer(buffer, len, layer, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_region_from_memory_ptr(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_region_from_memory_ptr(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_region_main(buffer, len, region_x, region_y, region_w, region_h, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_layer_region_from_memory_ptr(exri_uc const *buffer, int len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_layer_region_from_memory_ptr(exri_uc const *buffer, size_t len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_region_main_layer(buffer, len, layer, region_x, region_y, region_w, region_h, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_channels_from_memory_ptr(exri_uc const *buffer, int len, int *x, int *y, int *num_channels)
+static float *exri__loadf_channels_from_memory_ptr(exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels)
 {
    return exri__loadf_channels_main(buffer, len, x, y, num_channels);
 }
 
-static float *exri__loadf_channels_region_from_memory_ptr(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
+static float *exri__loadf_channels_region_from_memory_ptr(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
 {
    return exri__loadf_channels_region_main(buffer, len, region_x, region_y, region_w, region_h, x, y, num_channels);
 }
 
-static float *exri__loadf_tiled_level_from_memory_ptr(exri_uc const *buffer, int len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_tiled_level_from_memory_ptr(exri_uc const *buffer, size_t len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_tiled_level_main(buffer, len, level_x, level_y, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_tiled_level_region_from_memory_ptr(exri_uc const *buffer, int len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_tiled_level_region_from_memory_ptr(exri_uc const *buffer, size_t len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri__loadf_tiled_level_region_main(buffer, len, level_x, level_y, region_x, region_y, region_w, region_h, x, y, channels_in_file, desired_channels);
 }
 
-static float *exri__loadf_scrgb_from_memory_ptr(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
+static float *exri__loadf_scrgb_from_memory_ptr(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    return exri__loadf_scrgb_main(buffer, len, x, y, channels_in_file, desired_channels, color_flags);
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_from_memory(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    int color_flags;
 
@@ -6718,7 +6752,7 @@ EXRIDEF int EXRI_CALL exri_loadf_from_memory(float **out_pixels, exri_uc const *
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_layer_from_memory(float **out_pixels, exri_uc const *buffer, int len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_layer_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    double transform[9];
    int color_flags;
@@ -6752,7 +6786,7 @@ EXRIDEF int EXRI_CALL exri_loadf_layer_from_memory(float **out_pixels, exri_uc c
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    double transform[9];
    int color_flags;
@@ -6786,7 +6820,7 @@ EXRIDEF int EXRI_CALL exri_loadf_region_from_memory(float **out_pixels, exri_uc 
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_layer_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_layer_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    double transform[9];
    int color_flags;
@@ -6820,7 +6854,7 @@ EXRIDEF int EXRI_CALL exri_loadf_layer_region_from_memory(float **out_pixels, ex
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_channels_from_memory(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *num_channels)
+EXRIDEF int EXRI_CALL exri_loadf_channels_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels)
 {
    if (out_pixels == NULL) {
       exri__err("invalid argument");
@@ -6832,7 +6866,7 @@ EXRIDEF int EXRI_CALL exri_loadf_channels_from_memory(float **out_pixels, exri_u
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_channels_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
+EXRIDEF int EXRI_CALL exri_loadf_channels_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
 {
    if (out_pixels == NULL) {
       exri__err("invalid argument");
@@ -6844,7 +6878,7 @@ EXRIDEF int EXRI_CALL exri_loadf_channels_region_from_memory(float **out_pixels,
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, int len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    double transform[9];
    int color_flags;
@@ -6878,7 +6912,7 @@ EXRIDEF int EXRI_CALL exri_loadf_tiled_level_from_memory(float **out_pixels, exr
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region_from_memory(float **out_pixels, exri_uc const *buffer, int len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    double transform[9];
    int color_flags;
@@ -6912,59 +6946,48 @@ EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region_from_memory(float **out_pixe
    return *out_pixels != NULL;
 }
 
-static int exri__grow_buffer(exri_uc **buffer, int *capacity, int needed)
+static int exri__grow_buffer(exri_uc **buffer, size_t *capacity, size_t needed)
 {
-   int new_capacity;
    size_t new_capacity_size;
-   size_t needed_size;
    void *new_buffer;
 
-   if (needed < 0)
-      return 0;
-   needed_size = (size_t) needed;
+   new_capacity_size = *capacity;
+   if (new_capacity_size == 0)
+      new_capacity_size = 4096u;
 
-   new_capacity = *capacity;
-   if (new_capacity <= 0)
-      new_capacity = 4096;
-   new_capacity_size = (size_t) new_capacity;
-
-   while (new_capacity_size < needed_size) {
-      if (new_capacity_size > (size_t) INT_MAX / 2u) {
-         new_capacity = needed;
-         new_capacity_size = needed_size;
+   while (new_capacity_size < needed) {
+      if (new_capacity_size > ((size_t) -1) / 2u) {
+         new_capacity_size = needed;
          break;
       }
       new_capacity_size *= 2u;
    }
-   if (new_capacity_size > (size_t) INT_MAX)
-      return 0;
-   new_capacity = (int) new_capacity_size;
 
-   new_buffer = EXRI_REALLOC(*buffer, (size_t) new_capacity);
+   new_buffer = EXRI_REALLOC(*buffer, new_capacity_size);
    if (new_buffer == NULL)
       return 0;
 
    *buffer = (exri_uc *) new_buffer;
-   *capacity = new_capacity;
+   *capacity = new_capacity_size;
    return 1;
 }
 
-static int exri__append(exri_uc **buffer, int *length, int *capacity, exri_uc const *data, int data_len)
+static int exri__append(exri_uc **buffer, size_t *length, size_t *capacity, exri_uc const *data, int data_len)
 {
-   int needed;
+   size_t needed;
 
    if (data_len < 0)
-      return 0;
-   if (*length > INT_MAX - data_len)
-      return 0;
+      return exri__err_invalid();
+   if (*length > ((size_t) -1) - (size_t) data_len)
+      return exri__err("input too large");
 
-   needed = *length + data_len;
+   needed = *length + (size_t) data_len;
    if (EXRI_MAX_INPUT_SIZE > 0 && needed > EXRI_MAX_INPUT_SIZE)
-      return 0;
+      return exri__err("input too large");
 
    if (needed > *capacity) {
       if (!exri__grow_buffer(buffer, capacity, needed))
-         return 0;
+         return exri__err("outofmem");
    }
 
    if (data_len > 0)
@@ -6973,16 +6996,16 @@ static int exri__append(exri_uc **buffer, int *length, int *capacity, exri_uc co
    return 1;
 }
 
-static int exri__append_output(exri_uc **buffer, int *length, int *capacity, exri_uc const *data, int data_len)
+static int exri__append_output(exri_uc **buffer, size_t *length, size_t *capacity, exri_uc const *data, int data_len)
 {
-   int needed;
+   size_t needed;
 
    if (data_len < 0)
       return exri__err("invalid argument");
-   if (*length > INT_MAX - data_len)
+   if (*length > ((size_t) -1) - (size_t) data_len)
       return exri__err("output too large");
 
-   needed = *length + data_len;
+   needed = *length + (size_t) data_len;
    if (EXRI_MAX_OUTPUT_SIZE > 0 && needed > EXRI_MAX_OUTPUT_SIZE)
       return exri__err("output too large");
 
@@ -6997,7 +7020,7 @@ static int exri__append_output(exri_uc **buffer, int *length, int *capacity, exr
    return 1;
 }
 
-static int exri__append_cstr_output(exri_uc **buffer, int *length, int *capacity, char const *s)
+static int exri__append_cstr_output(exri_uc **buffer, size_t *length, size_t *capacity, char const *s)
 {
    size_t n;
 
@@ -7008,7 +7031,7 @@ static int exri__append_cstr_output(exri_uc **buffer, int *length, int *capacity
    return exri__append_output(buffer, length, capacity, (exri_uc const *) s, (int) n);
 }
 
-static int exri__append_cstrn_output(exri_uc **buffer, int *length, int *capacity, char const *s, int n)
+static int exri__append_cstrn_output(exri_uc **buffer, size_t *length, size_t *capacity, char const *s, int n)
 {
    exri_uc zero;
 
@@ -7020,12 +7043,12 @@ static int exri__append_cstrn_output(exri_uc **buffer, int *length, int *capacit
    return exri__append_output(buffer, length, capacity, &zero, 1);
 }
 
-static int exri__append_u8_output(exri_uc **buffer, int *length, int *capacity, exri_uc v)
+static int exri__append_u8_output(exri_uc **buffer, size_t *length, size_t *capacity, exri_uc v)
 {
    return exri__append_output(buffer, length, capacity, &v, 1);
 }
 
-static int exri__append_u32le_output(exri_uc **buffer, int *length, int *capacity, exri__uint32 v)
+static int exri__append_u32le_output(exri_uc **buffer, size_t *length, size_t *capacity, exri__uint32 v)
 {
    exri_uc tmp[4];
 
@@ -7033,18 +7056,15 @@ static int exri__append_u32le_output(exri_uc **buffer, int *length, int *capacit
    return exri__append_output(buffer, length, capacity, tmp, 4);
 }
 
-static int exri__append_u64le_int_output(exri_uc **buffer, int *length, int *capacity, int v)
+static int exri__append_u64le_size_output(exri_uc **buffer, size_t *length, size_t *capacity, size_t v)
 {
    exri_uc tmp[8];
 
-   if (v < 0)
-      return exri__err("invalid argument");
-
-   exri__put64le_int_at(tmp, v);
+   exri__put64le_size_at(tmp, v);
    return exri__append_output(buffer, length, capacity, tmp, 8);
 }
 
-static int exri__append_attr_output(exri_uc **buffer, int *length, int *capacity, char const *name, char const *type, exri_uc const *data, int data_len)
+static int exri__append_attr_output(exri_uc **buffer, size_t *length, size_t *capacity, char const *name, char const *type, exri_uc const *data, int data_len)
 {
    if (data_len < 0)
       return exri__err("invalid argument");
@@ -7058,7 +7078,7 @@ static int exri__append_attr_output(exri_uc **buffer, int *length, int *capacity
    return exri__append_output(buffer, length, capacity, data, data_len);
 }
 
-static int exri__version_field_from_memory(exri_uc const *buffer, int len, exri__uint32 *version_field)
+static int exri__version_field_from_memory(exri_uc const *buffer, size_t len, exri__uint32 *version_field)
 {
    exri__uint32 v;
 
@@ -7075,7 +7095,7 @@ static int exri__version_field_from_memory(exri_uc const *buffer, int len, exri_
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_version_from_memory(exri_uc const *buffer, int len, int *version, int *flags)
+EXRIDEF int EXRI_CALL exri_version_from_memory(exri_uc const *buffer, size_t len, int *version, int *flags)
 {
    exri__uint32 version_field;
    exri__uint32 known_flags;
@@ -7130,18 +7150,18 @@ static int exri__attr_value_starts_with_cstr(exri_uc const *value, int value_siz
    return memcmp(value, s, (size_t) len) == 0;
 }
 
-static int exri__scan_multipart_part_header(exri_uc const *buffer, int len, int start, exri__multipart_part_ref *ref)
+static int exri__scan_multipart_part_header(exri_uc const *buffer, size_t len, size_t start, exri__multipart_part_ref *ref)
 {
    exri__context s;
    char const *name;
    char const *type;
    int name_len;
    int type_len;
-   int value_pos;
+   size_t value_pos;
    int value_size;
    exri__uint32 attr_size;
 
-   if (buffer == NULL || ref == NULL || start < 0 || start >= len)
+   if (buffer == NULL || ref == NULL || start >= len)
       return exri__err_invalid();
 
    memset(ref, 0, sizeof(*ref));
@@ -7171,7 +7191,7 @@ static int exri__scan_multipart_part_header(exri_uc const *buffer, int len, int 
          return exri__err_invalid();
 
       value_size = (int) attr_size;
-      if (!exri__require(&s, value_size))
+      if (!exri__require(&s, (size_t) value_size))
          return exri__err_invalid();
       value_pos = s.pos;
 
@@ -7202,16 +7222,16 @@ static int exri__scan_multipart_part_header(exri_uc const *buffer, int len, int 
          }
       }
 
-      s.pos = value_pos + value_size;
+      s.pos = value_pos + (size_t) value_size;
    }
 }
 
-static int exri__multipart_find_part(exri_uc const *buffer, int len, int part_index, exri__multipart_part_ref *part, int *tables_start, int *part_table_start, int *num_parts)
+static int exri__multipart_find_part(exri_uc const *buffer, size_t len, int part_index, exri__multipart_part_ref *part, size_t *tables_start, size_t *part_table_start, int *num_parts)
 {
    exri__uint32 version_field;
    exri__multipart_part_ref current;
    exri__multipart_part_ref selected;
-   int pos;
+   size_t pos;
    int count;
    int chunks_before;
    int total_chunks;
@@ -7234,7 +7254,7 @@ static int exri__multipart_find_part(exri_uc const *buffer, int len, int part_in
    memset(&selected, 0, sizeof(selected));
 
    for (;;) {
-      if (pos < 0 || pos >= len)
+      if (pos >= len)
          return exri__err_invalid();
       if (buffer[pos] == 0) {
          pos += 1;
@@ -7261,9 +7281,9 @@ static int exri__multipart_find_part(exri_uc const *buffer, int len, int part_in
       return exri__err_invalid();
    if (part_index >= 0 && !found)
       return exri__err("part not found");
-   if (total_chunks > (INT_MAX - pos) / 8)
+   if ((size_t) total_chunks > (((size_t) -1) - pos) / 8u)
       return exri__err_invalid();
-   if (pos + total_chunks * 8 > len)
+   if (pos + (size_t) total_chunks * 8u > len)
       return exri__err_invalid();
 
    if (part)
@@ -7271,31 +7291,31 @@ static int exri__multipart_find_part(exri_uc const *buffer, int len, int part_in
    if (tables_start)
       *tables_start = pos;
    if (part_table_start)
-      *part_table_start = pos + selected_chunks_before * 8;
+      *part_table_start = pos + (size_t) selected_chunks_before * 8u;
    if (num_parts)
       *num_parts = count;
 
    return 1;
 }
 
-static int exri__deep_read_chunk_header(exri_uc const *buffer, int len, int chunk_offset, int *line_y, int *packed_offset_size, int *packed_sample_size, int *unpacked_sample_size, int *payload_pos);
+static int exri__deep_read_chunk_header(exri_uc const *buffer, size_t len, size_t chunk_offset, int *line_y, int *packed_offset_size, int *packed_sample_size, int *unpacked_sample_size, size_t *payload_pos);
 
-static int exri__synthesize_multipart_part_to_memory(exri_uc **out_data, int *out_len, exri_uc const *buffer, int len, int part_index)
+static int exri__synthesize_multipart_part_to_memory(exri_uc **out_data, size_t *out_len, exri_uc const *buffer, size_t len, int part_index)
 {
    exri__multipart_part_ref part;
    exri_uc *out;
-   int capacity;
-   int length;
-   int tables_start;
-   int part_table_start;
+   size_t capacity;
+   size_t length;
+   size_t tables_start;
+   size_t part_table_start;
    int i;
-   int original_offset;
-   int chunk_offset;
+   size_t original_offset;
+   size_t chunk_offset;
    int data_len;
    int chunk_total;
    int packed_offsets;
    int packed_samples;
-   int offsets_pos;
+   size_t offsets_pos;
    exri__uint32 version_field;
    exri__uint32 part_number;
 
@@ -7321,23 +7341,27 @@ static int exri__synthesize_multipart_part_to_memory(exri_uc **out_data, int *ou
    if (part.tiled)
       version_field |= 0x00000200u;
 
+   if (part.header_end - part.header_start > (size_t) INT_MAX) {
+      exri__err("input too large");
+      goto fail;
+   }
    if (!exri__append_u32le_output(&out, &length, &capacity, 20000630u) ||
        !exri__append_u32le_output(&out, &length, &capacity, version_field) ||
-       !exri__append_output(&out, &length, &capacity, buffer + part.header_start, part.header_end - part.header_start))
+       !exri__append_output(&out, &length, &capacity, buffer + part.header_start, (int) (part.header_end - part.header_start)))
       goto fail;
 
    offsets_pos = length;
    for (i = 0; i < part.chunk_count; ++i) {
-      if (!exri__append_u64le_int_output(&out, &length, &capacity, 0))
+      if (!exri__append_u64le_size_output(&out, &length, &capacity, 0))
          goto fail;
    }
 
    for (i = 0; i < part.chunk_count; ++i) {
-      if (!exri__get64le_as_int_at(buffer + part_table_start + i * 8, &original_offset)) {
+      if (!exri__get64le_as_size_at(buffer + part_table_start + (size_t) i * 8u, &original_offset)) {
          exri__err_invalid();
          goto fail;
       }
-      if (!exri__has_bytes_at(original_offset, len, 4)) {
+      if (!exri__has_file_bytes_at(original_offset, len, 4)) {
          exri__err_invalid();
          goto fail;
       }
@@ -7359,30 +7383,30 @@ static int exri__synthesize_multipart_part_to_memory(exri_uc **out_data, int *ou
          }
          chunk_total = 28 + packed_offsets + packed_samples;
       } else if (part.tiled) {
-         if (!exri__has_bytes_at(chunk_offset, len, 20)) {
+         if (!exri__has_file_bytes_at(chunk_offset, len, 20)) {
             exri__err_invalid();
             goto fail;
          }
          data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 16));
-         if (data_len <= 0 || data_len > len - (chunk_offset + 20)) {
+         if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 20u)) {
             exri__err_invalid();
             goto fail;
          }
          chunk_total = 20 + data_len;
       } else {
-         if (!exri__has_bytes_at(chunk_offset, len, 8)) {
+         if (!exri__has_file_bytes_at(chunk_offset, len, 8)) {
             exri__err_invalid();
             goto fail;
          }
          data_len = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset + 4));
-         if (data_len <= 0 || data_len > len - (chunk_offset + 8)) {
+         if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u)) {
             exri__err_invalid();
             goto fail;
          }
          chunk_total = 8 + data_len;
       }
 
-      exri__put64le_int_at(out + offsets_pos + i * 8, length);
+      exri__put64le_size_at(out + offsets_pos + (size_t) i * 8u, length);
       if (!exri__append_output(&out, &length, &capacity, buffer + chunk_offset, chunk_total))
          goto fail;
    }
@@ -7398,7 +7422,7 @@ fail:
    return 0;
 }
 
-static int exri__single_part_index_ok(exri_uc const *buffer, int len, int part_index)
+static int exri__single_part_index_ok(exri_uc const *buffer, size_t len, int part_index)
 {
    exri__info info;
 
@@ -7411,7 +7435,7 @@ static int exri__single_part_index_ok(exri_uc const *buffer, int len, int part_i
    return 1;
 }
 
-static int exri__is_multipart_memory(exri_uc const *buffer, int len, int *is_multipart)
+static int exri__is_multipart_memory(exri_uc const *buffer, size_t len, int *is_multipart)
 {
    exri__uint32 version_field;
 
@@ -7424,7 +7448,7 @@ static int exri__is_multipart_memory(exri_uc const *buffer, int len, int *is_mul
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_count_from_memory(exri_uc const *buffer, int len, int *num_parts)
+EXRIDEF int EXRI_CALL exri_part_count_from_memory(exri_uc const *buffer, size_t len, int *num_parts)
 {
    int multipart;
    int count;
@@ -7449,10 +7473,10 @@ EXRIDEF int EXRI_CALL exri_part_count_from_memory(exri_uc const *buffer, int len
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_part_info_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file)
+EXRIDEF int EXRI_CALL exri_part_info_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -7476,10 +7500,10 @@ EXRIDEF int EXRI_CALL exri_part_info_from_memory(exri_uc const *buffer, int len,
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_x_levels, int *num_y_levels)
+EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -7503,10 +7527,10 @@ EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_memory(exri_uc const *buf
    return result;
 }
 
-static float *exri__loadf_part_from_memory_ptr(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_part_from_memory_ptr(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    float *result;
 
@@ -7532,10 +7556,10 @@ static float *exri__loadf_part_from_memory_ptr(exri_uc const *buffer, int len, i
    return result;
 }
 
-static float *exri__loadf_part_channels_from_memory_ptr(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels)
+static float *exri__loadf_part_channels_from_memory_ptr(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    float *result;
 
@@ -7561,10 +7585,10 @@ static float *exri__loadf_part_channels_from_memory_ptr(exri_uc const *buffer, i
    return result;
 }
 
-static float *exri__loadf_part_tiled_level_from_memory_ptr(exri_uc const *buffer, int len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
+static float *exri__loadf_part_tiled_level_from_memory_ptr(exri_uc const *buffer, size_t len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    float *result;
 
@@ -7590,11 +7614,11 @@ static float *exri__loadf_part_tiled_level_from_memory_ptr(exri_uc const *buffer
    return result;
 }
 
-static float *exri__loadf_part_tiled_level_scrgb_from_memory_ptr(exri_uc const *buffer, int len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
+static float *exri__loadf_part_tiled_level_scrgb_from_memory_ptr(exri_uc const *buffer, size_t len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    exri_uc *owned_single;
    exri_uc const *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    float *result;
    double transform[9];
@@ -7642,10 +7666,10 @@ static float *exri__loadf_part_tiled_level_scrgb_from_memory_ptr(exri_uc const *
    return result;
 }
 
-static float *exri__loadf_part_scrgb_from_memory_ptr(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
+static float *exri__loadf_part_scrgb_from_memory_ptr(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    float *result;
 
@@ -7671,7 +7695,7 @@ static float *exri__loadf_part_scrgb_from_memory_ptr(exri_uc const *buffer, int 
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_part_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_part_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    int color_flags;
 
@@ -7687,7 +7711,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part_from_memory(float **out_pixels, exri_uc co
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_part_channels_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels)
+EXRIDEF int EXRI_CALL exri_loadf_part_channels_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels)
 {
    if (out_pixels == NULL)
       return exri__err("invalid argument");
@@ -7696,7 +7720,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part_channels_from_memory(float **out_pixels, e
    return *out_pixels != NULL;
 }
 
-EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, int len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level_from_memory(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    int color_flags;
 
@@ -7745,7 +7769,7 @@ static int exri__deep_decode_payload(exri_uc *dst, int dst_len, exri_uc const *s
    return exri__err("unsupported deep compression");
 }
 
-static int exri__deep_prepare(exri_uc const *buffer, int len, exri__info *info, exri__channel **channels_out, int *pixel_count, int *num_blocks, int *block_lines, int *sample_size)
+static int exri__deep_prepare(exri_uc const *buffer, size_t len, exri__info *info, exri__channel **channels_out, int *pixel_count, int *num_blocks, int *block_lines, int *sample_size)
 {
    exri__attribute_ref attribute;
    exri__channel *channels;
@@ -7839,7 +7863,7 @@ static int exri__deep_prepare(exri_uc const *buffer, int len, exri__info *info, 
       EXRI_FREE(channels);
       return exri__err("invalid chunk count");
    }
-   if (info->header_end < 0 || info->header_end > len || blocks > (len - info->header_end) / 8) {
+   if (info->header_end > len || ((size_t) blocks) > (len - info->header_end) / 8u) {
       EXRI_FREE(channels);
       return exri__err_invalid();
    }
@@ -7856,48 +7880,53 @@ static int exri__deep_prepare(exri_uc const *buffer, int len, exri__info *info, 
    return 1;
 }
 
-static int exri__deep_read_chunk_header(exri_uc const *buffer, int len, int chunk_offset, int *line_y, int *packed_offset_size, int *packed_sample_size, int *unpacked_sample_size, int *payload_pos)
+static int exri__deep_read_chunk_header(exri_uc const *buffer, size_t len, size_t chunk_offset, int *line_y, int *packed_offset_size, int *packed_sample_size, int *unpacked_sample_size, size_t *payload_pos)
 {
-   int pos;
-   int packed_offsets;
-   int packed_samples;
-   int unpacked_samples;
+   size_t pos;
+   size_t packed_offsets;
+   size_t packed_samples;
+   size_t unpacked_samples;
 
-   if (!exri__has_bytes_at(chunk_offset, len, 28))
+   if (!exri__has_file_bytes_at(chunk_offset, len, 28))
       return exri__err_invalid();
-   if (!exri__get64le_as_int_at(buffer + chunk_offset + 4, &packed_offsets) ||
-       !exri__get64le_as_int_at(buffer + chunk_offset + 12, &packed_samples) ||
-       !exri__get64le_as_int_at(buffer + chunk_offset + 20, &unpacked_samples))
+   if (!exri__get64le_as_size_at(buffer + chunk_offset + 4, &packed_offsets) ||
+       !exri__get64le_as_size_at(buffer + chunk_offset + 12, &packed_samples) ||
+       !exri__get64le_as_size_at(buffer + chunk_offset + 20, &unpacked_samples))
       return exri__err_invalid();
 
    pos = chunk_offset + 28;
-   if (packed_offsets < 0 || packed_offsets > len - pos)
+   if (packed_offsets > len - pos)
       return exri__err_invalid();
    pos += packed_offsets;
-   if (packed_samples < 0 || packed_samples > len - pos)
+   if (packed_samples > len - pos)
+      return exri__err_invalid();
+
+   if ((packed_offset_size && packed_offsets > (size_t) INT_MAX) ||
+       (packed_sample_size && packed_samples > (size_t) INT_MAX) ||
+       (unpacked_sample_size && unpacked_samples > (size_t) INT_MAX))
       return exri__err_invalid();
 
    if (line_y)
       *line_y = exri__i32_from_u32(exri__get32le_at(buffer + chunk_offset));
    if (packed_offset_size)
-      *packed_offset_size = packed_offsets;
+      *packed_offset_size = (int) packed_offsets;
    if (packed_sample_size)
-      *packed_sample_size = packed_samples;
+      *packed_sample_size = (int) packed_samples;
    if (unpacked_sample_size)
-      *unpacked_sample_size = unpacked_samples;
+      *unpacked_sample_size = (int) unpacked_samples;
    if (payload_pos)
       *payload_pos = chunk_offset + 28;
    return 1;
 }
 
-static int exri__deep_build_sample_offsets(int **out_offsets, int *out_total_samples, exri_uc const *buffer, int len, exri__info const *info, int pixel_count, int num_blocks, int block_lines, int sample_size)
+static int exri__deep_build_sample_offsets(int **out_offsets, int *out_total_samples, exri_uc const *buffer, size_t len, exri__info const *info, int pixel_count, int num_blocks, int block_lines, int sample_size)
 {
    int *offsets;
    exri_uc *seen_blocks;
    exri_uc *offset_bytes;
    int seen_count;
    int i;
-   int chunk_offset;
+   size_t chunk_offset;
    int line_y;
    int y_rel;
    int block_index;
@@ -7907,7 +7936,7 @@ static int exri__deep_build_sample_offsets(int **out_offsets, int *out_total_sam
    int packed_offsets;
    int packed_samples;
    int unpacked_samples;
-   int payload_pos;
+   size_t payload_pos;
    int entry;
    int previous;
    int current;
@@ -7942,7 +7971,7 @@ static int exri__deep_build_sample_offsets(int **out_offsets, int *out_total_sam
    offset_bytes = NULL;
    seen_count = 0;
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info->header_end + i * 8, &chunk_offset))
+      if (!exri__get64le_as_size_at(buffer + info->header_end + (size_t) i * 8u, &chunk_offset))
          goto invalid;
       if (!exri__deep_read_chunk_header(buffer, len, chunk_offset, &line_y, &packed_offsets, &packed_samples, &unpacked_samples, &payload_pos))
          goto fail;
@@ -8011,7 +8040,7 @@ static int exri__deep_build_sample_offsets(int **out_offsets, int *out_total_sam
       running += count;
    }
    offsets[pixel_count] = running;
-   if (EXRI_MAX_PIXELS > 0 && running > EXRI_MAX_PIXELS) {
+   if (EXRI_MAX_PIXELS > 0 && (size_t) running > (size_t) EXRI_MAX_PIXELS) {
       exri__err("image too large");
       goto fail;
    }
@@ -8038,14 +8067,14 @@ fail:
    return 0;
 }
 
-static int exri__deep_decode_samples(float *samples, int const *sample_offsets, exri_uc const *buffer, int len, exri__info const *info, exri__channel const *channels, int pixel_count, int num_blocks, int block_lines, int sample_size)
+static int exri__deep_decode_samples(float *samples, int const *sample_offsets, exri_uc const *buffer, size_t len, exri__info const *info, exri__channel const *channels, int pixel_count, int num_blocks, int block_lines, int sample_size)
 {
    exri_uc *offset_bytes;
    exri_uc *sample_bytes;
    int *channel_bases;
    int i;
    int c;
-   int chunk_offset;
+   size_t chunk_offset;
    int line_y;
    int y_rel;
    int num_lines;
@@ -8054,7 +8083,7 @@ static int exri__deep_decode_samples(float *samples, int const *sample_offsets, 
    int packed_offsets;
    int packed_samples;
    int unpacked_samples;
-   int payload_pos;
+   size_t payload_pos;
    int previous;
    int current;
    int count;
@@ -8079,7 +8108,7 @@ static int exri__deep_decode_samples(float *samples, int const *sample_offsets, 
       return exri__err("outofmem");
 
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buffer + info->header_end + i * 8, &chunk_offset))
+      if (!exri__get64le_as_size_at(buffer + info->header_end + (size_t) i * 8u, &chunk_offset))
          goto invalid;
       if (!exri__deep_read_chunk_header(buffer, len, chunk_offset, &line_y, &packed_offsets, &packed_samples, &unpacked_samples, &payload_pos))
          goto fail;
@@ -8183,7 +8212,7 @@ fail:
    return 0;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *num_channels, int *total_samples)
+EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri__info info;
    exri__channel *channels;
@@ -8215,7 +8244,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_memory(exri_uc const *buffer,
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_memory(exri_uc const *buffer, int len, int *num_channels)
+EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_memory(exri_uc const *buffer, size_t len, int *num_channels)
 {
    exri__info info;
    exri__channel *channels;
@@ -8240,7 +8269,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_memory(exri_uc const
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_memory(exri_uc const *buffer, int len, int channel_index, char *name, int name_size)
+EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_memory(exri_uc const *buffer, size_t len, int channel_index, char *name, int name_size)
 {
    exri__info info;
    exri__channel *channels;
@@ -8270,7 +8299,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_memory(exri_uc const 
    return result;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int channel_index, int *pixel_type)
+EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int channel_index, int *pixel_type)
 {
    exri__info info;
    exri__channel *channels;
@@ -8300,7 +8329,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_memory(exri_uc 
    return 1;
 }
 
-EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_memory(exri_uc const *buffer, int len, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
+EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri__info info;
    exri__channel *channels;
@@ -8330,7 +8359,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_memory(exri_uc co
    return 1;
 }
 
-static int exri__load_deep_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, int len, int *x, int *y, int *num_channels, int *total_samples)
+static int exri__load_deep_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri__info info;
    exri__channel *channels;
@@ -8397,10 +8426,10 @@ fail:
    return 0;
 }
 
-EXRIDEF int EXRI_CALL exri_deep_part_info_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels, int *total_samples)
+EXRIDEF int EXRI_CALL exri_deep_part_info_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8424,10 +8453,10 @@ EXRIDEF int EXRI_CALL exri_deep_part_info_from_memory(exri_uc const *buffer, int
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_memory(exri_uc const *buffer, int len, int part_index, int *num_channels)
+EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_memory(exri_uc const *buffer, size_t len, int part_index, int *num_channels)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8451,10 +8480,10 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_memory(exri_uc const *bu
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, char *name, int name_size)
+EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8478,10 +8507,10 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_memory(exri_uc const *buf
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *pixel_type)
+EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8505,10 +8534,10 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_memory(exri_uc cons
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_memory(exri_uc const *buffer, int len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
+EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_memory(exri_uc const *buffer, size_t len, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8533,10 +8562,10 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_memory(exri_uc const 
    return result;
 }
 
-EXRIDEF int EXRI_CALL exri_load_deep_part_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels, int *total_samples)
+EXRIDEF int EXRI_CALL exri_load_deep_part_from_memory(float **out_samples, int **out_sample_offsets, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *single;
-   int single_len;
+   size_t single_len;
    int multipart;
    int result;
 
@@ -8640,7 +8669,7 @@ static int exri__validate_write_attributes(exri_write_attribute const *attribute
    return 1;
 }
 
-static int exri__append_write_attributes(exri_uc **buffer, int *length, int *capacity, exri_write_attribute const *attributes, int num_attributes)
+static int exri__append_write_attributes(exri_uc **buffer, size_t *length, size_t *capacity, exri_write_attribute const *attributes, int num_attributes)
 {
    int i;
 
@@ -8727,8 +8756,8 @@ static int exri__write_channels_match_pixel_type(exri_write_channel const *chann
 static int exri__make_named_chlist(exri_write_channel const *channels, int num_channels, exri_uc **out_chlist, int *out_len)
 {
    exri_uc *chlist;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int i;
    int j;
    int name_len;
@@ -8770,9 +8799,13 @@ static int exri__make_named_chlist(exri_write_channel const *channels, int num_c
    }
    if (!exri__append_u8_output(&chlist, &length, &capacity, 0))
       goto fail;
+   if (length > (size_t) INT_MAX) {
+      exri__err("output too large");
+      goto fail;
+   }
 
    *out_chlist = chlist;
-   *out_len = length;
+   *out_len = (int) length;
    return 1;
 
 fail:
@@ -8826,7 +8859,7 @@ static int exri__make_chlist(exri_uc *dst, int comp, int pixel_type, int *out_le
    return 1;
 }
 
-static int exri__write_box2i_attr(exri_uc **buffer, int *length, int *capacity, char const *name, int min_x, int min_y, int max_x, int max_y)
+static int exri__write_box2i_attr(exri_uc **buffer, size_t *length, size_t *capacity, char const *name, int min_x, int min_y, int max_x, int max_y)
 {
    exri_uc value[16];
 
@@ -8837,7 +8870,7 @@ static int exri__write_box2i_attr(exri_uc **buffer, int *length, int *capacity, 
    return exri__append_attr_output(buffer, length, capacity, name, "box2i", value, 16);
 }
 
-static int exri__write_float_attr(exri_uc **buffer, int *length, int *capacity, char const *name, float f)
+static int exri__write_float_attr(exri_uc **buffer, size_t *length, size_t *capacity, char const *name, float f)
 {
    exri_uc value[4];
 
@@ -8845,7 +8878,7 @@ static int exri__write_float_attr(exri_uc **buffer, int *length, int *capacity, 
    return exri__append_attr_output(buffer, length, capacity, name, "float", value, 4);
 }
 
-static int exri__write_v2f_attr(exri_uc **buffer, int *length, int *capacity, char const *name, float x, float y)
+static int exri__write_v2f_attr(exri_uc **buffer, size_t *length, size_t *capacity, char const *name, float x, float y)
 {
    exri_uc value[8];
 
@@ -8854,7 +8887,7 @@ static int exri__write_v2f_attr(exri_uc **buffer, int *length, int *capacity, ch
    return exri__append_attr_output(buffer, length, capacity, name, "v2f", value, 8);
 }
 
-static int exri__write_int_attr(exri_uc **buffer, int *length, int *capacity, char const *name, int value)
+static int exri__write_int_attr(exri_uc **buffer, size_t *length, size_t *capacity, char const *name, int value)
 {
    exri_uc data[4];
 
@@ -8862,7 +8895,7 @@ static int exri__write_int_attr(exri_uc **buffer, int *length, int *capacity, ch
    return exri__append_attr_output(buffer, length, capacity, name, "int", data, 4);
 }
 
-static int exri__write_tiledesc_attr(exri_uc **buffer, int *length, int *capacity, int tile_width, int tile_height, int level_mode, int rounding_mode)
+static int exri__write_tiledesc_attr(exri_uc **buffer, size_t *length, size_t *capacity, int tile_width, int tile_height, int level_mode, int rounding_mode)
 {
    exri_uc data[9];
 
@@ -8872,7 +8905,7 @@ static int exri__write_tiledesc_attr(exri_uc **buffer, int *length, int *capacit
    return exri__append_attr_output(buffer, length, capacity, "tiles", "tiledesc", data, 9);
 }
 
-static int exri__write_chromaticities_attr(exri_uc **buffer, int *length, int *capacity)
+static int exri__write_chromaticities_attr(exri_uc **buffer, size_t *length, size_t *capacity)
 {
    static float const srgb[8] =
    {
@@ -9111,7 +9144,7 @@ EXRIDEF int EXRI_CALL exri_is_spectral_channel_name(char const *channel_name)
    return exri_parse_spectral_wavelength(channel_name) >= 0.0f;
 }
 
-EXRIDEF int EXRI_CALL exri_is_spectral_from_memory(exri_uc const *buffer, int len)
+EXRIDEF int EXRI_CALL exri_is_spectral_from_memory(exri_uc const *buffer, size_t len)
 {
    exri__info info;
    exri__channel *channels;
@@ -9133,7 +9166,7 @@ EXRIDEF int EXRI_CALL exri_is_spectral_from_memory(exri_uc const *buffer, int le
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_spectrum_type_from_memory(exri_uc const *buffer, int len, int *spectrum_type)
+EXRIDEF int EXRI_CALL exri_spectrum_type_from_memory(exri_uc const *buffer, size_t len, int *spectrum_type)
 {
    exri__info info;
    exri__channel *channels;
@@ -9191,7 +9224,7 @@ EXRIDEF int EXRI_CALL exri_spectrum_type_from_memory(exri_uc const *buffer, int 
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_memory(exri_uc const *buffer, int len, float *wavelengths, int max_wavelengths, int *num_wavelengths)
+EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_memory(exri_uc const *buffer, size_t len, float *wavelengths, int max_wavelengths, int *num_wavelengths)
 {
    exri__info info;
    exri__channel *channels;
@@ -9274,7 +9307,7 @@ EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_memory(exri_uc const *buffe
    return 1;
 }
 
-EXRIDEF int EXRI_CALL exri_spectral_units_from_memory(exri_uc const *buffer, int len, char *units, int units_size)
+EXRIDEF int EXRI_CALL exri_spectral_units_from_memory(exri_uc const *buffer, size_t len, char *units, int units_size)
 {
    exri__info info;
    exri__channel *channels;
@@ -9311,6 +9344,19 @@ EXRIDEF int EXRI_CALL exri_spectral_units_from_memory(exri_uc const *buffer, int
    }
 
    return unit_len;
+}
+
+static int exri__rle_compress_bound(int src_size, int *out_bound)
+{
+   int packets;
+
+   if (src_size < 0 || out_bound == NULL)
+      return exri__err("invalid argument");
+   packets = src_size / 127 + (src_size % 127 ? 1 : 0);
+   if (src_size > INT_MAX - packets)
+      return exri__err("output too large");
+   *out_bound = src_size + packets;
+   return 1;
 }
 
 static int exri__compress_rle_exr_block(exri_uc *dst, int dst_capacity, exri_uc *tmp, exri_uc const *src, int src_size, int *out_size)
@@ -10621,7 +10667,7 @@ static size_t exri__write_tiled_source_offset(int w, int h, int comp, int level_
    return ((size_t) sy * (size_t) w + (size_t) sx) * (size_t) comp + (size_t) component;
 }
 
-static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w, int h, int comp, float const *data, int compression, int written_pixel_type, int tile_size, int tile_level_mode, int tile_rounding_mode)
+static int exri__writef_tiled_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int comp, float const *data, int compression, int written_pixel_type, int tile_size, int tile_level_mode, int tile_rounding_mode)
 {
    exri_uc *buffer;
    exri_uc *tile;
@@ -10633,8 +10679,8 @@ static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w,
    exri_uc *payload;
    exri_uc chlist[80];
    exri_uc compression_value;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int chlist_len;
    int bytes_per_written_sample;
    int max_tile_row_bytes;
@@ -10646,9 +10692,8 @@ static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w,
    int piz_capacity_bytes;
    int b44_capacity;
    int rle_capacity;
-   int rle_blocks;
    int zip_capacity;
-   int offset_table_pos;
+   size_t offset_table_pos;
    int num_x_levels;
    int num_y_levels;
    int num_x_tiles;
@@ -10718,10 +10763,8 @@ static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w,
    zip_capacity = 0;
 
    if (compression == EXRI_WRITE_COMPRESSION_RLE) {
-      rle_blocks = max_tile_block_bytes / 128 + (max_tile_block_bytes % 128 ? 1 : 0);
-      if (max_tile_block_bytes > INT_MAX - rle_blocks)
-         return exri__err("output too large");
-      rle_capacity = max_tile_block_bytes + rle_blocks;
+      if (!exri__rle_compress_bound(max_tile_block_bytes, &rle_capacity))
+         return 0;
    } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
       if (!exri__zlib_store_bound(max_tile_block_bytes, &zip_capacity))
          return 0;
@@ -10880,8 +10923,7 @@ static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w,
                   exri__err("output too large");
                   goto fail;
                }
-               exri__put32le_at(buffer + offset_table_pos + tile_index * 8, (exri__uint32) length);
-               exri__put32le_at(buffer + offset_table_pos + tile_index * 8 + 4, 0u);
+               exri__put64le_size_at(buffer + offset_table_pos + (size_t) tile_index * 8u, length);
 
                payload = tile;
                payload_len = tile_block_bytes;
@@ -10895,8 +10937,10 @@ static int exri__writef_tiled_to_memory(exri_uc **out_data, int *out_len, int w,
                } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
                   if (!exri__compress_zip_exr_block(zip_data, zip_capacity, zip_tmp, tile, tile_block_bytes, &zip_len))
                      goto fail;
-                  payload = zip_data;
-                  payload_len = zip_len;
+                  if (zip_len < tile_block_bytes) {
+                     payload = zip_data;
+                     payload_len = zip_len;
+                  }
                } else if (compression == EXRI_WRITE_COMPRESSION_PIZ) {
                   if (!exri__compress_piz_exr_block(zip_data, piz_capacity_bytes, tile, tile_block_bytes, tile_w, tile_h, comp, NULL, written_pixel_type, &piz_len))
                      goto fail;
@@ -10956,7 +11000,7 @@ fail:
    return 0;
 }
 
-static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, int compression, int written_pixel_type, int tile_size, int tile_level_mode, int tile_rounding_mode)
+static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, int compression, int written_pixel_type, int tile_size, int tile_level_mode, int tile_rounding_mode)
 {
    exri_uc *buffer;
    exri_uc *tile;
@@ -10968,8 +11012,8 @@ static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_le
    exri_uc *payload;
    exri_uc *chlist;
    exri_uc compression_value;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int chlist_len;
    int bytes_per_written_pixel;
    int max_tile_row_bytes;
@@ -10981,9 +11025,8 @@ static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_le
    int piz_capacity_bytes;
    int b44_capacity;
    int rle_capacity;
-   int rle_blocks;
    int zip_capacity;
-   int offset_table_pos;
+   size_t offset_table_pos;
    int num_x_levels;
    int num_y_levels;
    int num_x_tiles;
@@ -11055,10 +11098,8 @@ static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_le
    zip_capacity = 0;
 
    if (compression == EXRI_WRITE_COMPRESSION_RLE) {
-      rle_blocks = max_tile_block_bytes / 128 + (max_tile_block_bytes % 128 ? 1 : 0);
-      if (max_tile_block_bytes > INT_MAX - rle_blocks)
-         return exri__err("output too large");
-      rle_capacity = max_tile_block_bytes + rle_blocks;
+      if (!exri__rle_compress_bound(max_tile_block_bytes, &rle_capacity))
+         return 0;
    } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
       if (!exri__zlib_store_bound(max_tile_block_bytes, &zip_capacity))
          return 0;
@@ -11217,8 +11258,7 @@ static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_le
                   exri__err("output too large");
                   goto fail;
                }
-               exri__put32le_at(buffer + offset_table_pos + tile_index * 8, (exri__uint32) length);
-               exri__put32le_at(buffer + offset_table_pos + tile_index * 8 + 4, 0u);
+               exri__put64le_size_at(buffer + offset_table_pos + (size_t) tile_index * 8u, length);
 
                payload = tile;
                payload_len = tile_block_bytes;
@@ -11232,8 +11272,10 @@ static int exri__writef_channels_tiled_to_memory(exri_uc **out_data, int *out_le
                } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
                   if (!exri__compress_zip_exr_block(zip_data, zip_capacity, zip_tmp, tile, tile_block_bytes, &zip_len))
                      goto fail;
-                  payload = zip_data;
-                  payload_len = zip_len;
+                  if (zip_len < tile_block_bytes) {
+                     payload = zip_data;
+                     payload_len = zip_len;
+                  }
                } else if (compression == EXRI_WRITE_COMPRESSION_PIZ) {
                   if (!exri__compress_piz_exr_block(zip_data, piz_capacity_bytes, tile, tile_block_bytes, tile_w, tile_h, num_channels, channels, written_pixel_type, &piz_len))
                      goto fail;
@@ -11379,7 +11421,7 @@ static int exri__write_options_to_flags(exri_write_options const *options, int a
    return 1;
 }
 
-static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, int compression)
+static int exri__writef_channels_to_memory_flags(exri_uc **out_data, size_t *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, int compression)
 {
    exri_uc *buffer;
    exri_uc *row;
@@ -11391,8 +11433,8 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
    exri_uc *payload;
    exri_uc *chlist;
    exri_uc compression_value;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int chlist_len;
    int row_bytes;
    int bytes_per_written_pixel;
@@ -11412,9 +11454,8 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
    int pxr24_bytes_per_sample;
    int b44_capacity;
    int rle_capacity;
-   int rle_blocks;
    int zip_capacity;
-   int offset_table_pos;
+   size_t offset_table_pos;
    int block_index;
    int line;
    int num_lines;
@@ -11491,7 +11532,7 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
       return exri__err("unsupported storage");
    if (w > EXRI_MAX_DIMENSIONS || h > EXRI_MAX_DIMENSIONS)
       return exri__err("image too large");
-   if (EXRI_MAX_PIXELS > 0 && w > EXRI_MAX_PIXELS / h)
+   if (EXRI_MAX_PIXELS > 0 && (size_t) w > (size_t) EXRI_MAX_PIXELS / (size_t) h)
       return exri__err("image too large");
    if ((size_t) w > ((size_t) -1) / (size_t) h ||
        (size_t) w * (size_t) h > ((size_t) -1) / (size_t) num_channels)
@@ -11535,10 +11576,8 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
    zip_capacity = 0;
    b44_capacity = 0;
    if (compression == EXRI_WRITE_COMPRESSION_RLE) {
-      rle_blocks = row_bytes / 128 + (row_bytes % 128 ? 1 : 0);
-      if (row_bytes > INT_MAX - rle_blocks)
-         return exri__err("output too large");
-      rle_capacity = row_bytes + rle_blocks;
+      if (!exri__rle_compress_bound(row_bytes, &rle_capacity))
+         return 0;
    } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
       if (!exri__zlib_store_bound(block_capacity_bytes, &zip_capacity))
          return 0;
@@ -11681,8 +11720,7 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
          exri__err("output too large");
          goto fail;
       }
-      exri__put32le_at(buffer + offset_table_pos + block_index * 8, (exri__uint32) length);
-      exri__put32le_at(buffer + offset_table_pos + block_index * 8 + 4, 0u);
+      exri__put64le_size_at(buffer + offset_table_pos + (size_t) block_index * 8u, length);
 
       payload = row;
       payload_len = block_bytes;
@@ -11696,8 +11734,10 @@ static int exri__writef_channels_to_memory_flags(exri_uc **out_data, int *out_le
       } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
          if (!exri__compress_zip_exr_block(zip_data, zip_capacity, zip_tmp, row, block_bytes, &zip_len))
             goto fail;
-         payload = zip_data;
-         payload_len = zip_len;
+         if (zip_len < block_bytes) {
+            payload = zip_data;
+            payload_len = zip_len;
+         }
       } else if (compression == EXRI_WRITE_COMPRESSION_PIZ) {
          if (!exri__compress_piz_exr_block(zip_data, piz_capacity_bytes, row, block_bytes, w, num_lines, num_channels, channels, written_pixel_type, &piz_len))
             goto fail;
@@ -11748,7 +11788,7 @@ fail:
    return 0;
 }
 
-static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w, int h, int comp, float const *data, int compression)
+static int exri__writef_to_memory_flags(exri_uc **out_data, size_t *out_len, int w, int h, int comp, float const *data, int compression)
 {
    exri_uc *buffer;
    exri_uc *row;
@@ -11760,8 +11800,8 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
    exri_uc *payload;
    exri_uc chlist[80];
    exri_uc compression_value;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int chlist_len;
    int row_bytes;
    int bytes_per_written_sample;
@@ -11781,9 +11821,8 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
    int pxr24_bytes_per_sample;
    int b44_capacity;
    int rle_capacity;
-   int rle_blocks;
    int zip_capacity;
-   int offset_table_pos;
+   size_t offset_table_pos;
    int block_index;
    int line;
    int num_lines;
@@ -11856,7 +11895,7 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
       return exri__err("unsupported storage");
    if (w > EXRI_MAX_DIMENSIONS || h > EXRI_MAX_DIMENSIONS)
       return exri__err("image too large");
-   if (EXRI_MAX_PIXELS > 0 && w > EXRI_MAX_PIXELS / h)
+   if (EXRI_MAX_PIXELS > 0 && (size_t) w > (size_t) EXRI_MAX_PIXELS / (size_t) h)
       return exri__err("image too large");
    if ((size_t) w > ((size_t) -1) / (size_t) h ||
        (size_t) w * (size_t) h > ((size_t) -1) / (size_t) comp)
@@ -11888,10 +11927,8 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
    zip_capacity = 0;
    b44_capacity = 0;
    if (compression == EXRI_WRITE_COMPRESSION_RLE) {
-      rle_blocks = row_bytes / 128 + (row_bytes % 128 ? 1 : 0);
-      if (row_bytes > INT_MAX - rle_blocks)
-         return exri__err("output too large");
-      rle_capacity = row_bytes + rle_blocks;
+      if (!exri__rle_compress_bound(row_bytes, &rle_capacity))
+         return 0;
    } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
       if (!exri__zlib_store_bound(block_capacity_bytes, &zip_capacity))
          return 0;
@@ -12032,8 +12069,7 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
          exri__err("output too large");
          goto fail;
       }
-      exri__put32le_at(buffer + offset_table_pos + block_index * 8, (exri__uint32) length);
-      exri__put32le_at(buffer + offset_table_pos + block_index * 8 + 4, 0u);
+      exri__put64le_size_at(buffer + offset_table_pos + (size_t) block_index * 8u, length);
 
       payload = row;
       payload_len = block_bytes;
@@ -12047,8 +12083,10 @@ static int exri__writef_to_memory_flags(exri_uc **out_data, int *out_len, int w,
       } else if (compression == EXRI_WRITE_COMPRESSION_ZIPS || compression == EXRI_WRITE_COMPRESSION_ZIP) {
          if (!exri__compress_zip_exr_block(zip_data, zip_capacity, zip_tmp, row, block_bytes, &zip_len))
             goto fail;
-         payload = zip_data;
-         payload_len = zip_len;
+         if (zip_len < block_bytes) {
+            payload = zip_data;
+            payload_len = zip_len;
+         }
       } else if (compression == EXRI_WRITE_COMPRESSION_PIZ) {
          if (!exri__compress_piz_exr_block(zip_data, piz_capacity_bytes, row, block_bytes, w, num_lines, comp, NULL, written_pixel_type, &piz_len))
             goto fail;
@@ -12097,7 +12135,7 @@ fail:
    return 0;
 }
 
-EXRIDEF int EXRI_CALL exri_writef_to_memory(exri_uc **out_data, int *out_len, int w, int h, int comp, float const *data, exri_write_options const *options)
+EXRIDEF int EXRI_CALL exri_writef_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int comp, float const *data, exri_write_options const *options)
 {
    int flags;
 
@@ -12110,7 +12148,7 @@ EXRIDEF int EXRI_CALL exri_writef_to_memory(exri_uc **out_data, int *out_len, in
    return exri__writef_to_memory_flags(out_data, out_len, w, h, comp, data, flags);
 }
 
-EXRIDEF int EXRI_CALL exri_writef_channels_to_memory(exri_uc **out_data, int *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options)
+EXRIDEF int EXRI_CALL exri_writef_channels_to_memory(exri_uc **out_data, size_t *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options)
 {
    int flags;
 
@@ -12126,10 +12164,10 @@ EXRIDEF int EXRI_CALL exri_writef_channels_to_memory(exri_uc **out_data, int *ou
 typedef struct
 {
    exri_uc *data;
-   int len;
+   size_t len;
    exri__info info;
    int chunk_count;
-   int multipart_table_pos;
+   size_t multipart_table_pos;
 } exri__multipart_write_part;
 
 static int exri__multipart_write_attributes_valid(exri_write_attribute const *attributes, int num_attributes)
@@ -12169,7 +12207,7 @@ static int exri__multipart_write_part_name_valid(exri_write_part const *parts, i
    return 1;
 }
 
-static int exri__multipart_write_single_part(exri_write_part const *part, exri_uc **out_data, int *out_len)
+static int exri__multipart_write_single_part(exri_write_part const *part, exri_uc **out_data, size_t *out_len)
 {
    if (part->channels == NULL) {
       if (part->attributes != NULL || part->num_attributes != 0)
@@ -12242,43 +12280,40 @@ static int exri__single_part_chunk_count_for_info(exri__info const *info, int *c
    return 1;
 }
 
-static int exri__single_part_chunk_total(exri_uc const *data, int len, int chunk_offset, int tiled, int *chunk_total)
+static int exri__single_part_chunk_total(exri_uc const *data, size_t len, size_t chunk_offset, int tiled, int *chunk_total)
 {
    int data_len;
 
    if (chunk_total == NULL)
       return exri__err("invalid argument");
-   if (chunk_offset < 0)
-      return exri__err_invalid();
-
    if (tiled) {
-      if (!exri__has_bytes_at(chunk_offset, len, 20))
+      if (!exri__has_file_bytes_at(chunk_offset, len, 20))
          return exri__err_invalid();
       data_len = exri__i32_from_u32(exri__get32le_at(data + chunk_offset + 16));
-      if (data_len <= 0 || data_len > len - (chunk_offset + 20))
+      if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 20u))
          return exri__err_invalid();
       *chunk_total = 20 + data_len;
       return 1;
    }
 
-   if (!exri__has_bytes_at(chunk_offset, len, 8))
+   if (!exri__has_file_bytes_at(chunk_offset, len, 8))
       return exri__err_invalid();
    data_len = exri__i32_from_u32(exri__get32le_at(data + chunk_offset + 4));
-   if (data_len <= 0 || data_len > len - (chunk_offset + 8))
+   if (data_len <= 0 || (size_t) data_len > len - (chunk_offset + 8u))
       return exri__err_invalid();
    *chunk_total = 8 + data_len;
    return 1;
 }
 
-static int exri__append_single_header_attrs_for_multipart(exri_uc **buffer, int *length, int *capacity, exri_uc const *single, int single_len)
+static int exri__append_single_header_attrs_for_multipart(exri_uc **buffer, size_t *length, size_t *capacity, exri_uc const *single, size_t single_len)
 {
    exri__context s;
    char const *name;
    char const *type;
    int name_len;
    int type_len;
-   int attr_start;
-   int value_pos;
+   size_t attr_start;
+   size_t value_pos;
    int value_size;
    exri__uint32 attr_size;
 
@@ -12299,30 +12334,32 @@ static int exri__append_single_header_attrs_for_multipart(exri_uc **buffer, int 
       if (attr_size > (exri__uint32) INT_MAX)
          return exri__err_invalid();
       value_size = (int) attr_size;
-      if (!exri__require(&s, value_size))
+      if (!exri__require(&s, (size_t) value_size))
          return exri__err_invalid();
       value_pos = s.pos;
-      s.pos = value_pos + value_size;
+      s.pos = value_pos + (size_t) value_size;
 
       if (strcmp(name, "name") != 0 &&
           strcmp(name, "type") != 0 &&
           strcmp(name, "chunkCount") != 0) {
-         if (!exri__append_output(buffer, length, capacity, single + attr_start, s.pos - attr_start))
+         if (s.pos - attr_start > (size_t) INT_MAX)
+            return exri__err("output too large");
+         if (!exri__append_output(buffer, length, capacity, single + attr_start, (int) (s.pos - attr_start)))
             return 0;
       }
    }
 }
 
-EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, int *out_len, exri_write_part const *parts, int num_parts)
+EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, size_t *out_len, exri_write_part const *parts, int num_parts)
 {
    exri__multipart_write_part *written_parts;
    exri_uc *buffer;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    int i;
    int j;
    int ok;
-   int chunk_offset;
+   size_t chunk_offset;
    int chunk_total;
    int name_len;
    char const *type_name;
@@ -12361,7 +12398,8 @@ EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, int *o
       if (!exri__single_part_chunk_count_for_info(&written_parts[i].info, &written_parts[i].chunk_count))
          goto done;
       if (written_parts[i].chunk_count <= 0 ||
-          written_parts[i].chunk_count > (written_parts[i].len - written_parts[i].info.header_end) / 8) {
+          written_parts[i].info.header_end > written_parts[i].len ||
+          (size_t) written_parts[i].chunk_count > (written_parts[i].len - written_parts[i].info.header_end) / 8u) {
          exri__err_invalid();
          goto done;
       }
@@ -12393,20 +12431,20 @@ EXRIDEF int EXRI_CALL exri_writef_multipart_to_memory(exri_uc **out_data, int *o
    for (i = 0; i < num_parts; ++i) {
       written_parts[i].multipart_table_pos = length;
       for (j = 0; j < written_parts[i].chunk_count; ++j) {
-         if (!exri__append_u64le_int_output(&buffer, &length, &capacity, 0))
+         if (!exri__append_u64le_size_output(&buffer, &length, &capacity, 0))
             goto done;
       }
    }
 
    for (i = 0; i < num_parts; ++i) {
       for (j = 0; j < written_parts[i].chunk_count; ++j) {
-         if (!exri__get64le_as_int_at(written_parts[i].data + written_parts[i].info.header_end + j * 8, &chunk_offset)) {
+         if (!exri__get64le_as_size_at(written_parts[i].data + written_parts[i].info.header_end + (size_t) j * 8u, &chunk_offset)) {
             exri__err_invalid();
             goto done;
          }
          if (!exri__single_part_chunk_total(written_parts[i].data, written_parts[i].len, chunk_offset, written_parts[i].info.tiled, &chunk_total))
             goto done;
-         exri__put64le_int_at(buffer + written_parts[i].multipart_table_pos + j * 8, length);
+         exri__put64le_size_at(buffer + written_parts[i].multipart_table_pos + (size_t) j * 8u, length);
          if (!exri__append_u32le_output(&buffer, &length, &capacity, (exri__uint32) i))
             goto done;
          if (!exri__append_output(&buffer, &length, &capacity, written_parts[i].data + chunk_offset, chunk_total))
@@ -12434,8 +12472,7 @@ done:
 EXRIDEF int EXRI_CALL exri_writef_to_callbacks(exri_write_callbacks const *clbk, void *user, int w, int h, int comp, float const *data, exri_write_options const *options)
 {
    exri_uc *buffer;
-   int len;
-   int written;
+   size_t len;
 
    if (clbk == NULL || clbk->write == NULL)
       return exri__err("invalid argument");
@@ -12445,19 +12482,18 @@ EXRIDEF int EXRI_CALL exri_writef_to_callbacks(exri_write_callbacks const *clbk,
    if (!exri_writef_to_memory(&buffer, &len, w, h, comp, data, options))
       return 0;
 
-   written = clbk->write(user, buffer, len);
-   EXRI_FREE(buffer);
-   if (written != len)
+   if (!clbk->write(user, buffer, len)) {
+      EXRI_FREE(buffer);
       return exri__err("write failed");
-
+   }
+   EXRI_FREE(buffer);
    return 1;
 }
 
 EXRIDEF int EXRI_CALL exri_writef_channels_to_callbacks(exri_write_callbacks const *clbk, void *user, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options)
 {
    exri_uc *buffer;
-   int len;
-   int written;
+   size_t len;
 
    if (clbk == NULL || clbk->write == NULL)
       return exri__err("invalid argument");
@@ -12467,19 +12503,18 @@ EXRIDEF int EXRI_CALL exri_writef_channels_to_callbacks(exri_write_callbacks con
    if (!exri_writef_channels_to_memory(&buffer, &len, w, h, num_channels, data, channels, attributes, num_attributes, options))
       return 0;
 
-   written = clbk->write(user, buffer, len);
-   EXRI_FREE(buffer);
-   if (written != len)
+   if (!clbk->write(user, buffer, len)) {
+      EXRI_FREE(buffer);
       return exri__err("write failed");
-
+   }
+   EXRI_FREE(buffer);
    return 1;
 }
 
 EXRIDEF int EXRI_CALL exri_writef_multipart_to_callbacks(exri_write_callbacks const *clbk, void *user, exri_write_part const *parts, int num_parts)
 {
    exri_uc *buffer;
-   int len;
-   int written;
+   size_t len;
 
    if (clbk == NULL || clbk->write == NULL)
       return exri__err("invalid argument");
@@ -12489,21 +12524,21 @@ EXRIDEF int EXRI_CALL exri_writef_multipart_to_callbacks(exri_write_callbacks co
    if (!exri_writef_multipart_to_memory(&buffer, &len, parts, num_parts))
       return 0;
 
-   written = clbk->write(user, buffer, len);
-   EXRI_FREE(buffer);
-   if (written != len)
+   if (!clbk->write(user, buffer, len)) {
+      EXRI_FREE(buffer);
       return exri__err("write failed");
-
+   }
+   EXRI_FREE(buffer);
    return 1;
 }
 
-static exri_uc *exri__read_callbacks_to_memory(exri_io_callbacks const *clbk, void *user, int *out_len)
+static exri_uc *exri__read_callbacks_to_memory(exri_io_callbacks const *clbk, void *user, size_t *out_len)
 {
    exri_uc tmp[4096];
    exri_uc *buffer;
-   int capacity;
-   int length;
-   int n;
+   size_t capacity;
+   size_t length;
+   size_t n;
 
    if (clbk == NULL || clbk->read == NULL)
       return NULL;
@@ -12513,18 +12548,19 @@ static exri_uc *exri__read_callbacks_to_memory(exri_io_callbacks const *clbk, vo
    length = 0;
 
    for (;;) {
-      n = clbk->read(user, (char *) tmp, (int) sizeof(tmp));
-      if (n < 0) {
+      n = 0;
+      if (!clbk->read(user, tmp, sizeof(tmp), &n)) {
          EXRI_FREE(buffer);
          return NULL;
       }
-      if (n > (int) sizeof(tmp)) {
+      if (n > sizeof(tmp)) {
+         exri__err("read failed");
          EXRI_FREE(buffer);
          return NULL;
       }
       if (n == 0)
          break;
-      if (!exri__append(&buffer, &length, &capacity, tmp, n)) {
+      if (n > (size_t) INT_MAX || !exri__append(&buffer, &length, &capacity, tmp, (int) n)) {
          EXRI_FREE(buffer);
          return NULL;
       }
@@ -12537,7 +12573,7 @@ static exri_uc *exri__read_callbacks_to_memory(exri_io_callbacks const *clbk, vo
 EXRIDEF int EXRI_CALL exri_is_exr_from_callbacks(exri_io_callbacks const *clbk, void *user)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12552,7 +12588,7 @@ EXRIDEF int EXRI_CALL exri_is_exr_from_callbacks(exri_io_callbacks const *clbk, 
 EXRIDEF int EXRI_CALL exri_version_from_callbacks(exri_io_callbacks const *clbk, void *user, int *version, int *flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12567,7 +12603,7 @@ EXRIDEF int EXRI_CALL exri_version_from_callbacks(exri_io_callbacks const *clbk,
 EXRIDEF int EXRI_CALL exri_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12582,7 +12618,7 @@ EXRIDEF int EXRI_CALL exri_info_from_callbacks(exri_io_callbacks const *clbk, vo
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12597,7 +12633,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_callbacks(exri_io_callbac
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12612,7 +12648,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_callbacks(exri_io_callback
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12627,7 +12663,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_callbacks(exri_io_ca
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12642,7 +12678,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_callbacks(exri_io_call
 EXRIDEF int EXRI_CALL exri_part_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int *num_parts)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12657,7 +12693,7 @@ EXRIDEF int EXRI_CALL exri_part_count_from_callbacks(exri_io_callbacks const *cl
 EXRIDEF int EXRI_CALL exri_part_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *channels_in_file)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12672,7 +12708,7 @@ EXRIDEF int EXRI_CALL exri_part_info_from_callbacks(exri_io_callbacks const *clb
 EXRIDEF int EXRI_CALL exri_part_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12687,7 +12723,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_count_from_callbacks(exri_io_callbacks c
 EXRIDEF int EXRI_CALL exri_part_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12702,7 +12738,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_name_from_callbacks(exri_io_callbacks co
 EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12717,7 +12753,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_pixel_type_from_callbacks(exri_io_callba
 EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12732,7 +12768,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_sampling_from_callbacks(exri_io_callback
 EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12747,7 +12783,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_callbacks(exri_io_cal
 EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12762,7 +12798,7 @@ EXRIDEF int EXRI_CALL exri_part_tiled_level_count_from_callbacks(exri_io_callbac
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12777,7 +12813,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_callbacks(exri_io_callbacks c
 EXRIDEF int EXRI_CALL exri_deep_part_info_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12792,7 +12828,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_info_from_callbacks(exri_io_callbacks const
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12807,7 +12843,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_callbacks(exri_io_ca
 EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12822,7 +12858,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_count_from_callbacks(exri_io_callba
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12837,7 +12873,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_callbacks(exri_io_cal
 EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12852,7 +12888,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_name_from_callbacks(exri_io_callbac
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12867,7 +12903,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_callbacks(exri_
 EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12882,7 +12918,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_callbacks(exri_io_c
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12897,7 +12933,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_callbacks(exri_io
 EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_callbacks(exri_io_callbacks const *clbk, void *user, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12912,7 +12948,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling_from_callbacks(exri_io_cal
 EXRIDEF int EXRI_CALL exri_loadf_from_callbacks(float **out_pixels, exri_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -12930,7 +12966,7 @@ EXRIDEF int EXRI_CALL exri_loadf_from_callbacks(float **out_pixels, exri_io_call
 EXRIDEF int EXRI_CALL exri_loadf_part_from_callbacks(float **out_pixels, exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -12948,7 +12984,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part_from_callbacks(float **out_pixels, exri_io
 EXRIDEF int EXRI_CALL exri_load_deep_part_from_callbacks(float **out_samples, int **out_sample_offsets, exri_io_callbacks const *clbk, void *user, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_samples == NULL || out_sample_offsets == NULL)
@@ -12968,7 +13004,7 @@ EXRIDEF int EXRI_CALL exri_load_deep_part_from_callbacks(float **out_samples, in
 EXRIDEF int EXRI_CALL exri_is_spectral_from_callbacks(exri_io_callbacks const *clbk, void *user)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12983,7 +13019,7 @@ EXRIDEF int EXRI_CALL exri_is_spectral_from_callbacks(exri_io_callbacks const *c
 EXRIDEF int EXRI_CALL exri_spectrum_type_from_callbacks(exri_io_callbacks const *clbk, void *user, int *spectrum_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -12998,7 +13034,7 @@ EXRIDEF int EXRI_CALL exri_spectrum_type_from_callbacks(exri_io_callbacks const 
 EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_callbacks(exri_io_callbacks const *clbk, void *user, float *wavelengths, int max_wavelengths, int *num_wavelengths)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -13013,7 +13049,7 @@ EXRIDEF int EXRI_CALL exri_spectral_wavelengths_from_callbacks(exri_io_callbacks
 EXRIDEF int EXRI_CALL exri_spectral_units_from_callbacks(exri_io_callbacks const *clbk, void *user, char *units, int units_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_callbacks_to_memory(clbk, user, &len);
@@ -13027,12 +13063,12 @@ EXRIDEF int EXRI_CALL exri_spectral_units_from_callbacks(exri_io_callbacks const
 
 #ifndef EXRI_NO_STDIO
 
-static exri_uc *exri__read_file_to_memory(FILE *f, int *out_len)
+static exri_uc *exri__read_file_to_memory(FILE *f, size_t *out_len)
 {
    exri_uc tmp[4096];
    exri_uc *buffer;
-   int capacity;
-   int length;
+   size_t capacity;
+   size_t length;
    size_t n;
 
    if (f == NULL)
@@ -13067,7 +13103,7 @@ static exri_uc *exri__read_file_to_memory(FILE *f, int *out_len)
    return buffer;
 }
 
-static exri_uc *exri__read_filename_to_memory(char const *filename, int *out_len)
+static exri_uc *exri__read_filename_to_memory(char const *filename, size_t *out_len)
 {
    FILE *f;
    exri_uc *buffer;
@@ -13094,7 +13130,7 @@ static exri_uc *exri__read_filename_to_memory(char const *filename, int *out_len
 EXRI__PRIVATEDEF int EXRI_CALL exri_is_exr_from_file(FILE *f)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13109,7 +13145,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_is_exr_from_file(FILE *f)
 EXRI__PRIVATEDEF int EXRI_CALL exri_version_from_file(FILE *f, int *version, int *flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13124,7 +13160,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_version_from_file(FILE *f, int *version, int
 EXRI__PRIVATEDEF int EXRI_CALL exri_info_from_file(FILE *f, int *x, int *y, int *channels_in_file)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13139,7 +13175,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_info_from_file(FILE *f, int *x, int *y, int 
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_file(FILE *f, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13154,7 +13190,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count_from_file(FILE *f, int *num_ch
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_file(FILE *f, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13169,7 +13205,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name_from_file(FILE *f, int channel_
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_file(FILE *f, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13184,7 +13220,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type_from_file(FILE *f, int ch
 EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_file(FILE *f, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13199,7 +13235,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling_from_file(FILE *f, int chan
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_count_from_file(FILE *f, int *num_parts)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13214,7 +13250,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_count_from_file(FILE *f, int *num_parts
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_info_from_file(FILE *f, int part_index, int *x, int *y, int *channels_in_file)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13229,7 +13265,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_info_from_file(FILE *f, int part_index,
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_count_from_file(FILE *f, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13244,7 +13280,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_count_from_file(FILE *f, int pa
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_name_from_file(FILE *f, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13259,7 +13295,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_name_from_file(FILE *f, int par
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_pixel_type_from_file(FILE *f, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13274,7 +13310,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_pixel_type_from_file(FILE *f, i
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_sampling_from_file(FILE *f, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13289,7 +13325,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_channel_sampling_from_file(FILE *f, int
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_tiled_level_count_from_file(FILE *f, int part_index, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13304,7 +13340,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_tiled_level_count_from_file(FILE *f, in
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_file(FILE *f, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13319,7 +13355,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info_from_file(FILE *f, int *x, int *y,
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_info_from_file(FILE *f, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13334,7 +13370,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_info_from_file(FILE *f, int part_i
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_file(FILE *f, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13349,7 +13385,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count_from_file(FILE *f, int *n
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_count_from_file(FILE *f, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13364,7 +13400,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_count_from_file(FILE *f, i
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_file(FILE *f, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13379,7 +13415,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name_from_file(FILE *f, int cha
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_name_from_file(FILE *f, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13394,7 +13430,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_name_from_file(FILE *f, in
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_file(FILE *f, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13409,7 +13445,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type_from_file(FILE *f, i
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_file(FILE *f, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13424,7 +13460,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_pixel_type_from_file(FILE 
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_file(FILE *f, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13439,7 +13475,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling_from_file(FILE *f, int
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_sampling_from_file(FILE *f, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13454,7 +13490,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_part_channel_sampling_from_file(FILE *f
 EXRI__PRIVATEDEF float * EXRI_CALL exri__loadf_from_file_ptr(FILE *f, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    float *result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13471,7 +13507,7 @@ EXRI__PRIVATEDEF float * EXRI_CALL exri__loadf_from_file_ptr(FILE *f, int *x, in
 EXRI__PRIVATEDEF int EXRI_CALL exri_load_deep_from_file_to(float **out_samples, int **out_sample_offsets, FILE *f, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_samples == NULL || out_sample_offsets == NULL)
@@ -13491,7 +13527,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_load_deep_from_file_to(float **out_samples, 
 EXRI__PRIVATEDEF int EXRI_CALL exri_load_deep_part_from_file_to(float **out_samples, int **out_sample_offsets, FILE *f, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_samples == NULL || out_sample_offsets == NULL)
@@ -13511,7 +13547,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_load_deep_part_from_file_to(float **out_samp
 EXRI__PRIVATEDEF float * EXRI_CALL exri__loadf_part_from_file_ptr(FILE *f, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    float *result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13528,7 +13564,7 @@ EXRI__PRIVATEDEF float * EXRI_CALL exri__loadf_part_from_file_ptr(FILE *f, int p
 EXRI__PRIVATEDEF float * EXRI_CALL exri_loadf_scrgb_from_file(FILE *f, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    float *result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13545,7 +13581,7 @@ EXRI__PRIVATEDEF float * EXRI_CALL exri_loadf_scrgb_from_file(FILE *f, int *x, i
 EXRI__PRIVATEDEF float * EXRI_CALL exri_loadf_part_scrgb_from_file(FILE *f, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int color_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    float *result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13614,7 +13650,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_count(char const *filename, int *num
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13638,7 +13674,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_name(char const *filename, int chann
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13662,7 +13698,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_pixel_type(char const *filename, int
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13686,7 +13722,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_channel_sampling(char const *filename, int c
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13710,7 +13746,7 @@ EXRIDEF int EXRI_CALL exri_layer_count(char const *filename, int *num_layers)
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13734,7 +13770,7 @@ EXRIDEF int EXRI_CALL exri_layer_name(char const *filename, int layer_index, cha
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13758,7 +13794,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count(char const *filename, int *n
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13782,7 +13818,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name(char const *filename, int att
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13806,7 +13842,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type(char const *filename, int att
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13830,7 +13866,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size(char const *filename, i
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13854,7 +13890,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value(char const *filename, int at
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -13877,7 +13913,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value(char const *filename, int at
 EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count_from_file(FILE *f, int *num_attributes)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13892,7 +13928,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_count_from_file(FILE *f, int *num_
 EXRIDEF int EXRI_CALL exri_part_attribute_count(char const *filename, int part_index, int *num_attributes)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -13907,7 +13943,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_count(char const *filename, int part_i
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_count_from_file(FILE *f, int part_index, int *num_attributes)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13922,7 +13958,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_count_from_file(FILE *f, int 
 EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name_from_file(FILE *f, int attribute_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13937,7 +13973,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_name_from_file(FILE *f, int attrib
 EXRIDEF int EXRI_CALL exri_part_attribute_name(char const *filename, int part_index, int attribute_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -13952,7 +13988,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_name(char const *filename, int part_in
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_name_from_file(FILE *f, int part_index, int attribute_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13967,7 +14003,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_name_from_file(FILE *f, int p
 EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type_from_file(FILE *f, int attribute_index, char *type, int type_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -13982,7 +14018,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_type_from_file(FILE *f, int attrib
 EXRIDEF int EXRI_CALL exri_part_attribute_type(char const *filename, int part_index, int attribute_index, char *type, int type_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -13997,7 +14033,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_type(char const *filename, int part_in
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_type_from_file(FILE *f, int part_index, int attribute_index, char *type, int type_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14012,7 +14048,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_type_from_file(FILE *f, int p
 EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size_from_file(FILE *f, int attribute_index, int *value_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14027,7 +14063,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_size_from_file(FILE *f, int 
 EXRIDEF int EXRI_CALL exri_part_attribute_value_size(char const *filename, int part_index, int attribute_index, int *value_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14042,7 +14078,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_value_size(char const *filename, int p
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_value_size_from_file(FILE *f, int part_index, int attribute_index, int *value_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14057,7 +14093,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_value_size_from_file(FILE *f,
 EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_from_file(FILE *f, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14072,7 +14108,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_attribute_value_from_file(FILE *f, int attri
 EXRIDEF int EXRI_CALL exri_part_attribute_value(char const *filename, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14087,7 +14123,7 @@ EXRIDEF int EXRI_CALL exri_part_attribute_value(char const *filename, int part_i
 EXRI__PRIVATEDEF int EXRI_CALL exri_part_attribute_value_from_file(FILE *f, int part_index, int attribute_index, exri_uc *value, int value_size, int *bytes_written)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14103,7 +14139,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count(char const *filename, int 
 {
    FILE *f;
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (filename == NULL)
@@ -14126,7 +14162,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count(char const *filename, int 
 EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_file(FILE *f, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_file_to_memory(f, &len);
@@ -14141,7 +14177,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_tiled_level_count_from_file(FILE *f, int *nu
 EXRIDEF int EXRI_CALL exri_part_count(char const *filename, int *num_parts)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14156,7 +14192,7 @@ EXRIDEF int EXRI_CALL exri_part_count(char const *filename, int *num_parts)
 EXRIDEF int EXRI_CALL exri_part_info(char const *filename, int part_index, int *x, int *y, int *channels_in_file)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14171,7 +14207,7 @@ EXRIDEF int EXRI_CALL exri_part_info(char const *filename, int part_index, int *
 EXRIDEF int EXRI_CALL exri_part_channel_count(char const *filename, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14186,7 +14222,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_count(char const *filename, int part_ind
 EXRIDEF int EXRI_CALL exri_part_channel_name(char const *filename, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14201,7 +14237,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_name(char const *filename, int part_inde
 EXRIDEF int EXRI_CALL exri_part_channel_pixel_type(char const *filename, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14216,7 +14252,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_pixel_type(char const *filename, int par
 EXRIDEF int EXRI_CALL exri_part_channel_sampling(char const *filename, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14231,7 +14267,7 @@ EXRIDEF int EXRI_CALL exri_part_channel_sampling(char const *filename, int part_
 EXRIDEF int EXRI_CALL exri_part_tiled_level_count(char const *filename, int part_index, int *num_x_levels, int *num_y_levels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14246,7 +14282,7 @@ EXRIDEF int EXRI_CALL exri_part_tiled_level_count(char const *filename, int part
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info(char const *filename, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14261,7 +14297,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_info(char const *filename, int *x, int 
 EXRIDEF int EXRI_CALL exri_deep_part_info(char const *filename, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14276,7 +14312,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_info(char const *filename, int part_index, 
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count(char const *filename, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14291,7 +14327,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_count(char const *filename, int
 EXRIDEF int EXRI_CALL exri_deep_part_channel_count(char const *filename, int part_index, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14306,7 +14342,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_count(char const *filename, int par
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name(char const *filename, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14321,7 +14357,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_name(char const *filename, int 
 EXRIDEF int EXRI_CALL exri_deep_part_channel_name(char const *filename, int part_index, int channel_index, char *name, int name_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14336,7 +14372,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_name(char const *filename, int part
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type(char const *filename, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14351,7 +14387,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_pixel_type(char const *filename
 EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type(char const *filename, int part_index, int channel_index, int *pixel_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14366,7 +14402,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_pixel_type(char const *filename, in
 EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling(char const *filename, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14381,7 +14417,7 @@ EXRI__PRIVATEDEF int EXRI_CALL exri_deep_channel_sampling(char const *filename, 
 EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling(char const *filename, int part_index, int channel_index, int *x_sampling, int *y_sampling, int *p_linear)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14396,7 +14432,7 @@ EXRIDEF int EXRI_CALL exri_deep_part_channel_sampling(char const *filename, int 
 EXRIDEF int EXRI_CALL exri_load_deep_part(float **out_samples, int **out_sample_offsets, char const *filename, int part_index, int *x, int *y, int *num_channels, int *total_samples)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_samples == NULL || out_sample_offsets == NULL)
@@ -14416,7 +14452,7 @@ EXRIDEF int EXRI_CALL exri_load_deep_part(float **out_samples, int **out_sample_
 EXRIDEF int EXRI_CALL exri_loadf(float **out_pixels, char const *filename, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14435,7 +14471,7 @@ EXRIDEF int EXRI_CALL exri_loadf(float **out_pixels, char const *filename, int *
 EXRIDEF int EXRI_CALL exri_loadf_part(float **out_pixels, char const *filename, int part_index, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14454,7 +14490,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part(float **out_pixels, char const *filename, 
 EXRIDEF int EXRI_CALL exri_loadf_layer(float **out_pixels, char const *filename, char const *layer, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14473,7 +14509,7 @@ EXRIDEF int EXRI_CALL exri_loadf_layer(float **out_pixels, char const *filename,
 EXRIDEF int EXRI_CALL exri_loadf_region(float **out_pixels, char const *filename, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14492,7 +14528,7 @@ EXRIDEF int EXRI_CALL exri_loadf_region(float **out_pixels, char const *filename
 EXRIDEF int EXRI_CALL exri_loadf_layer_region(float **out_pixels, char const *filename, char const *layer, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14511,7 +14547,7 @@ EXRIDEF int EXRI_CALL exri_loadf_layer_region(float **out_pixels, char const *fi
 EXRIDEF int EXRI_CALL exri_loadf_channels(float **out_pixels, char const *filename, int *x, int *y, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14530,7 +14566,7 @@ EXRIDEF int EXRI_CALL exri_loadf_channels(float **out_pixels, char const *filena
 EXRIDEF int EXRI_CALL exri_loadf_part_channels(float **out_pixels, char const *filename, int part_index, int *x, int *y, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14549,7 +14585,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part_channels(float **out_pixels, char const *f
 EXRIDEF int EXRI_CALL exri_loadf_channels_region(float **out_pixels, char const *filename, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14568,7 +14604,7 @@ EXRIDEF int EXRI_CALL exri_loadf_channels_region(float **out_pixels, char const 
 EXRIDEF int EXRI_CALL exri_loadf_tiled_level(float **out_pixels, char const *filename, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14587,7 +14623,7 @@ EXRIDEF int EXRI_CALL exri_loadf_tiled_level(float **out_pixels, char const *fil
 EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level(float **out_pixels, char const *filename, int part_index, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14606,7 +14642,7 @@ EXRIDEF int EXRI_CALL exri_loadf_part_tiled_level(float **out_pixels, char const
 EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region(float **out_pixels, char const *filename, int level_x, int level_y, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    if (out_pixels == NULL)
@@ -14625,7 +14661,7 @@ EXRIDEF int EXRI_CALL exri_loadf_tiled_level_region(float **out_pixels, char con
 static int exri__writef_to_file(FILE *f, int w, int h, int comp, float const *data, exri_write_options const *options)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    size_t written;
 
    if (f == NULL)
@@ -14666,7 +14702,7 @@ EXRIDEF int EXRI_CALL exri_writef(char const *filename, int w, int h, int comp, 
 static int exri__writef_channels_to_file(FILE *f, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, exri_write_options const *options)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    size_t written;
 
    if (f == NULL)
@@ -14707,7 +14743,7 @@ EXRIDEF int EXRI_CALL exri_writef_channels(char const *filename, int w, int h, i
 static int exri__writef_multipart_to_file(FILE *f, exri_write_part const *parts, int num_parts)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    size_t written;
 
    if (f == NULL)
@@ -14748,7 +14784,7 @@ EXRIDEF int EXRI_CALL exri_writef_multipart(char const *filename, exri_write_par
 EXRIDEF int EXRI_CALL exri_is_spectral(char const *filename)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14763,7 +14799,7 @@ EXRIDEF int EXRI_CALL exri_is_spectral(char const *filename)
 EXRIDEF int EXRI_CALL exri_spectrum_type(char const *filename, int *spectrum_type)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14778,7 +14814,7 @@ EXRIDEF int EXRI_CALL exri_spectrum_type(char const *filename, int *spectrum_typ
 EXRIDEF int EXRI_CALL exri_spectral_wavelengths(char const *filename, float *wavelengths, int max_wavelengths, int *num_wavelengths)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);
@@ -14793,7 +14829,7 @@ EXRIDEF int EXRI_CALL exri_spectral_wavelengths(char const *filename, float *wav
 EXRIDEF int EXRI_CALL exri_spectral_units(char const *filename, char *units, int units_size)
 {
    exri_uc *buffer;
-   int len;
+   size_t len;
    int result;
 
    buffer = exri__read_filename_to_memory(filename, &len);

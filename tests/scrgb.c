@@ -159,7 +159,7 @@ static int probe_missing_requires_flag(void)
 
    len = make_rgb_exr(b, 0, NULL, 1.0f, 0.5f, 0.25f);
    pixels = &sentinel;
-   if (exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
+   if (exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
       return 0;
    if (pixels) {
       exri_image_free(pixels);
@@ -167,7 +167,7 @@ static int probe_missing_requires_flag(void)
    }
 
    pixels = NULL;
-   if (!exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_ASSUME))
+   if (!exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_ASSUME))
       return 0;
    if (!nearf(pixels[0], 1.0f) || !nearf(pixels[1], 0.5f) || !nearf(pixels[2], 0.25f)) {
       exri_image_free(pixels);
@@ -189,7 +189,7 @@ static int probe_srgb_unchanged(void)
 
    len = make_rgb_exr(b, 1, srgb, 2.0f, -0.5f, 0.25f);
    pixels = NULL;
-   if (!exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
+   if (!exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
       return 0;
    if (x != 1 || y != 1 || c != 3 || !nearf(pixels[0], 2.0f) || !nearf(pixels[1], -0.5f) || !nearf(pixels[2], 0.25f)) {
       exri_image_free(pixels);
@@ -211,7 +211,7 @@ static int probe_primary_conversion(void)
 
    len = make_rgb_exr(b, 1, swapped, 1.0f, 2.0f, 3.0f);
    pixels = NULL;
-   if (!exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
+   if (!exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
       return 0;
    if (!nearf(pixels[0], 3.0f) || !nearf(pixels[1], 2.0f) || !nearf(pixels[2], 1.0f)) {
       exri_image_free(pixels);
@@ -233,7 +233,7 @@ static int probe_region_conversion(void)
 
    len = make_rgb_exr(b, 1, swapped, 1.0f, 2.0f, 3.0f);
    pixels = NULL;
-   if (!exri_loadf_region_from_memory(&pixels, b, len, 0, 0, 1, 1, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
+   if (!exri_loadf_region_from_memory(&pixels, b, (size_t) len, 0, 0, 1, 1, &x, &y, &c, 3, EXRI_LOAD_SCRGB_STRICT))
       return 0;
    if (x != 1 || y != 1 || c != 3 || !nearf(pixels[0], 3.0f) || !nearf(pixels[1], 2.0f) || !nearf(pixels[2], 1.0f)) {
       exri_image_free(pixels);
@@ -255,13 +255,13 @@ static int probe_bad_options(void)
 
    len = make_rgb_exr(b, 1, srgb, 1.0f, 1.0f, 1.0f);
    pixels = NULL;
-   (void) exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 1, EXRI_LOAD_SCRGB_STRICT);
+   (void) exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 1, EXRI_LOAD_SCRGB_STRICT);
    if (pixels) {
       exri_image_free(pixels);
       return 0;
    }
    pixels = NULL;
-   (void) exri_loadf_from_memory(&pixels, b, len, &x, &y, &c, 3, 99);
+   (void) exri_loadf_from_memory(&pixels, b, (size_t) len, &x, &y, &c, 3, 99);
    if (pixels) {
       exri_image_free(pixels);
       return 0;

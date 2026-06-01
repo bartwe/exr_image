@@ -73,15 +73,29 @@ EXRI_TESTDEF void exri_test_write_options_from_flags(exri_write_options *options
 EXRI_TESTDEF int exri_test_writef_to_memory(exri_uc **out_data, int *out_len, int w, int h, int comp, float const *data, int flags)
 {
    exri_write_options options;
+   size_t len;
+   int ok;
+
    exri_test_write_options_from_flags(&options, flags);
-   return exri_writef_to_memory(out_data, out_len, w, h, comp, data, &options);
+   len = 0;
+   ok = exri_writef_to_memory(out_data, &len, w, h, comp, data, &options);
+   if (out_len)
+      *out_len = len > (size_t) 0x7fffffff ? 0 : (int) len;
+   return ok && len <= (size_t) 0x7fffffff;
 }
 
 EXRI_TESTDEF int exri_test_writef_channels_to_memory(exri_uc **out_data, int *out_len, int w, int h, int num_channels, float const *data, exri_write_channel const *channels, exri_write_attribute const *attributes, int num_attributes, int flags)
 {
    exri_write_options options;
+   size_t len;
+   int ok;
+
    exri_test_write_options_from_flags(&options, flags);
-   return exri_writef_channels_to_memory(out_data, out_len, w, h, num_channels, data, channels, attributes, num_attributes, &options);
+   len = 0;
+   ok = exri_writef_channels_to_memory(out_data, &len, w, h, num_channels, data, channels, attributes, num_attributes, &options);
+   if (out_len)
+      *out_len = len > (size_t) 0x7fffffff ? 0 : (int) len;
+   return ok && len <= (size_t) 0x7fffffff;
 }
 
 EXRI_TESTDEF int exri_test_writef_to_callbacks(exri_write_callbacks const *clbk, void *user, int w, int h, int comp, float const *data, int flags)
@@ -144,7 +158,7 @@ EXRI_TESTDEF int exri_test_writef_channels_to_file(FILE *f, int w, int h, int nu
 }
 #endif
 
-EXRI_TESTDEF float *exri_test_loadf_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF float *exri_test_loadf_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -153,7 +167,7 @@ EXRI_TESTDEF float *exri_test_loadf_from_memory(exri_uc const *buffer, int len, 
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_scrgb_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRI_TESTDEF float *exri_test_loadf_scrgb_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    float *pixels;
    pixels = NULL;
@@ -162,7 +176,7 @@ EXRI_TESTDEF float *exri_test_loadf_scrgb_from_memory(exri_uc const *buffer, int
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_part_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF float *exri_test_loadf_part_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -171,7 +185,7 @@ EXRI_TESTDEF float *exri_test_loadf_part_from_memory(exri_uc const *buffer, int 
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_channels_from_memory(exri_uc const *buffer, int len, int *x, int *y, int *num_channels)
+EXRI_TESTDEF float *exri_test_loadf_channels_from_memory(exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -180,7 +194,7 @@ EXRI_TESTDEF float *exri_test_loadf_channels_from_memory(exri_uc const *buffer, 
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_part_channels_from_memory(exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels)
+EXRI_TESTDEF float *exri_test_loadf_part_channels_from_memory(exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -189,7 +203,7 @@ EXRI_TESTDEF float *exri_test_loadf_part_channels_from_memory(exri_uc const *buf
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_region_from_memory(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF float *exri_test_loadf_region_from_memory(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -198,7 +212,7 @@ EXRI_TESTDEF float *exri_test_loadf_region_from_memory(exri_uc const *buffer, in
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_channels_region_from_memory(exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
+EXRI_TESTDEF float *exri_test_loadf_channels_region_from_memory(exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -207,7 +221,7 @@ EXRI_TESTDEF float *exri_test_loadf_channels_region_from_memory(exri_uc const *b
    return pixels;
 }
 
-EXRI_TESTDEF float *exri_test_loadf_tiled_level_from_memory(exri_uc const *buffer, int len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF float *exri_test_loadf_tiled_level_from_memory(exri_uc const *buffer, size_t len, int level_x, int level_y, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    float *pixels;
    pixels = NULL;
@@ -354,37 +368,37 @@ EXRI_TESTDEF int exri_test_loadf_tiled_level_region_to(float **out_pixels, char 
 }
 #endif
 
-EXRI_TESTDEF int exri_test_loadf_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF int exri_test_loadf_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri_loadf_from_memory(out_pixels, buffer, len, x, y, channels_in_file, desired_channels, EXRI_LOAD_DEFAULT);
 }
 
-EXRI_TESTDEF int exri_test_loadf_scrgb_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
+EXRI_TESTDEF int exri_test_loadf_scrgb_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *channels_in_file, int desired_channels, int load_flags)
 {
    return exri_loadf_from_memory(out_pixels, buffer, len, x, y, channels_in_file, desired_channels, load_flags);
 }
 
-EXRI_TESTDEF int exri_test_loadf_part_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF int exri_test_loadf_part_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri_loadf_part_from_memory(out_pixels, buffer, len, part_index, x, y, channels_in_file, desired_channels, EXRI_LOAD_DEFAULT);
 }
 
-EXRI_TESTDEF int exri_test_loadf_region_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
+EXRI_TESTDEF int exri_test_loadf_region_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    return exri_loadf_region_from_memory(out_pixels, buffer, len, region_x, region_y, region_w, region_h, x, y, channels_in_file, desired_channels, EXRI_LOAD_DEFAULT);
 }
 
-EXRI_TESTDEF int exri_test_loadf_channels_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int *x, int *y, int *num_channels)
+EXRI_TESTDEF int exri_test_loadf_channels_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int *x, int *y, int *num_channels)
 {
    return exri_loadf_channels_from_memory(out_pixels, buffer, len, x, y, num_channels);
 }
 
-EXRI_TESTDEF int exri_test_loadf_part_channels_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int part_index, int *x, int *y, int *num_channels)
+EXRI_TESTDEF int exri_test_loadf_part_channels_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int part_index, int *x, int *y, int *num_channels)
 {
    return exri_loadf_part_channels_from_memory(out_pixels, buffer, len, part_index, x, y, num_channels);
 }
 
-EXRI_TESTDEF int exri_test_loadf_channels_region_from_memory_to(float **out_pixels, exri_uc const *buffer, int len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
+EXRI_TESTDEF int exri_test_loadf_channels_region_from_memory_to(float **out_pixels, exri_uc const *buffer, size_t len, int region_x, int region_y, int region_w, int region_h, int *x, int *y, int *num_channels)
 {
    return exri_loadf_channels_region_from_memory(out_pixels, buffer, len, region_x, region_y, region_w, region_h, x, y, num_channels);
 }
@@ -394,23 +408,23 @@ EXRI_TESTDEF int exri_test_loadf_channels_region_from_memory_to(float **out_pixe
 #define exri_writef_to_callbacks(clbk,user,w,h,comp,data,flags) exri_test_writef_to_callbacks(clbk,user,w,h,comp,data,flags)
 #define exri_writef_channels_to_callbacks(clbk,user,w,h,num_channels,data,channels,attributes,num_attributes,flags) exri_test_writef_channels_to_callbacks(clbk,user,w,h,num_channels,data,channels,attributes,num_attributes,flags)
 
-#define exri_loadf_from_memory(buffer,len,x,y,channels_in_file,desired_channels) exri_test_loadf_from_memory(buffer,len,x,y,channels_in_file,desired_channels)
-#define exri_loadf_scrgb_from_memory(buffer,len,x,y,channels_in_file,desired_channels,load_flags) exri_test_loadf_scrgb_from_memory(buffer,len,x,y,channels_in_file,desired_channels,load_flags)
-#define exri_loadf_part_from_memory(buffer,len,part_index,x,y,channels_in_file,desired_channels) exri_test_loadf_part_from_memory(buffer,len,part_index,x,y,channels_in_file,desired_channels)
-#define exri_loadf_channels_from_memory(buffer,len,x,y,num_channels) exri_test_loadf_channels_from_memory(buffer,len,x,y,num_channels)
-#define exri_loadf_part_channels_from_memory(buffer,len,part_index,x,y,num_channels) exri_test_loadf_part_channels_from_memory(buffer,len,part_index,x,y,num_channels)
-#define exri_loadf_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels) exri_test_loadf_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels)
-#define exri_loadf_channels_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,num_channels) exri_test_loadf_channels_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,num_channels)
-#define exri_loadf_tiled_level_from_memory(buffer,len,level_x,level_y,x,y,channels_in_file,desired_channels) exri_test_loadf_tiled_level_from_memory(buffer,len,level_x,level_y,x,y,channels_in_file,desired_channels)
+#define exri_loadf_from_memory(buffer,len,x,y,channels_in_file,desired_channels) exri_test_loadf_from_memory(buffer,(size_t) (len),x,y,channels_in_file,desired_channels)
+#define exri_loadf_scrgb_from_memory(buffer,len,x,y,channels_in_file,desired_channels,load_flags) exri_test_loadf_scrgb_from_memory(buffer,(size_t) (len),x,y,channels_in_file,desired_channels,load_flags)
+#define exri_loadf_part_from_memory(buffer,len,part_index,x,y,channels_in_file,desired_channels) exri_test_loadf_part_from_memory(buffer,(size_t) (len),part_index,x,y,channels_in_file,desired_channels)
+#define exri_loadf_channels_from_memory(buffer,len,x,y,num_channels) exri_test_loadf_channels_from_memory(buffer,(size_t) (len),x,y,num_channels)
+#define exri_loadf_part_channels_from_memory(buffer,len,part_index,x,y,num_channels) exri_test_loadf_part_channels_from_memory(buffer,(size_t) (len),part_index,x,y,num_channels)
+#define exri_loadf_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels) exri_test_loadf_region_from_memory(buffer,(size_t) (len),rx,ry,rw,rh,x,y,channels_in_file,desired_channels)
+#define exri_loadf_channels_region_from_memory(buffer,len,rx,ry,rw,rh,x,y,num_channels) exri_test_loadf_channels_region_from_memory(buffer,(size_t) (len),rx,ry,rw,rh,x,y,num_channels)
+#define exri_loadf_tiled_level_from_memory(buffer,len,level_x,level_y,x,y,channels_in_file,desired_channels) exri_test_loadf_tiled_level_from_memory(buffer,(size_t) (len),level_x,level_y,x,y,channels_in_file,desired_channels)
 #define exri_loadf_from_callbacks(clbk,user,x,y,channels_in_file,desired_channels) exri_test_loadf_from_callbacks(clbk,user,x,y,channels_in_file,desired_channels)
 
-#define exri_loadf_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels) exri_test_loadf_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels)
-#define exri_loadf_scrgb_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels,load_flags) exri_test_loadf_scrgb_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels,load_flags)
-#define exri_loadf_part_from_memory_to(out,buffer,len,part_index,x,y,channels_in_file,desired_channels) exri_test_loadf_part_from_memory_to(out,buffer,len,part_index,x,y,channels_in_file,desired_channels)
-#define exri_loadf_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels) exri_test_loadf_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels)
-#define exri_loadf_channels_from_memory_to(out,buffer,len,x,y,num_channels) exri_test_loadf_channels_from_memory_to(out,buffer,len,x,y,num_channels)
-#define exri_loadf_part_channels_from_memory_to(out,buffer,len,part_index,x,y,num_channels) exri_test_loadf_part_channels_from_memory_to(out,buffer,len,part_index,x,y,num_channels)
-#define exri_loadf_channels_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,num_channels) exri_test_loadf_channels_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,num_channels)
+#define exri_loadf_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels) exri_test_loadf_from_memory_to(out,buffer,(size_t) (len),x,y,channels_in_file,desired_channels)
+#define exri_loadf_scrgb_from_memory_to(out,buffer,len,x,y,channels_in_file,desired_channels,load_flags) exri_test_loadf_scrgb_from_memory_to(out,buffer,(size_t) (len),x,y,channels_in_file,desired_channels,load_flags)
+#define exri_loadf_part_from_memory_to(out,buffer,len,part_index,x,y,channels_in_file,desired_channels) exri_test_loadf_part_from_memory_to(out,buffer,(size_t) (len),part_index,x,y,channels_in_file,desired_channels)
+#define exri_loadf_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,channels_in_file,desired_channels) exri_test_loadf_region_from_memory_to(out,buffer,(size_t) (len),rx,ry,rw,rh,x,y,channels_in_file,desired_channels)
+#define exri_loadf_channels_from_memory_to(out,buffer,len,x,y,num_channels) exri_test_loadf_channels_from_memory_to(out,buffer,(size_t) (len),x,y,num_channels)
+#define exri_loadf_part_channels_from_memory_to(out,buffer,len,part_index,x,y,num_channels) exri_test_loadf_part_channels_from_memory_to(out,buffer,(size_t) (len),part_index,x,y,num_channels)
+#define exri_loadf_channels_region_from_memory_to(out,buffer,len,rx,ry,rw,rh,x,y,num_channels) exri_test_loadf_channels_region_from_memory_to(out,buffer,(size_t) (len),rx,ry,rw,rh,x,y,num_channels)
 
 #define exri_load_deep_from_memory_to(out_samples,out_offsets,buffer,len,x,y,num_channels,total_samples) exri_load_deep_part_from_memory(out_samples,out_offsets,buffer,len,0,x,y,num_channels,total_samples)
 #define exri_load_deep_part_from_memory_to(out_samples,out_offsets,buffer,len,part_index,x,y,num_channels,total_samples) exri_load_deep_part_from_memory(out_samples,out_offsets,buffer,len,part_index,x,y,num_channels,total_samples)

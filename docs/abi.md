@@ -8,12 +8,43 @@ P/Invoke:
   EXRI_LOAD_DEFAULT)`.
 - Pixel and deep-sample allocations are released with `exri_image_free()`.
 - Failure details are returned by `exri_failure_reason()`.
-- Public memory APIs accept `(unsigned char const *buffer, int len)`.
-- Public streaming APIs use `exri_io_callbacks` and `exri_write_callbacks`;
-  there is no public `FILE *` API.
+- Public memory APIs accept `(unsigned char const *buffer, size_t len)`.
+- Public streaming APIs use `exri_io_callbacks` and `exri_write_callbacks`.
+  Read callbacks return status and report transferred bytes through
+  `size_t *bytes_read`; write callbacks return status. There is no public
+  `FILE *` API.
 - Filename helpers are available unless `EXRI_NO_STDIO` is defined.
 - Public metadata APIs are part-aware. Use part index `0` for ordinary
   single-part files.
+
+## Size Limits
+
+The public ABI uses `size_t` for memory byte counts, callback transfer sizes,
+and in-memory writer output lengths. On 64-bit targets this allows inputs and
+outputs larger than 2 GiB when allocation and file-system limits allow it. On
+32-bit targets the native `size_t` limit remains the effective ceiling.
+
+The default safety policy keeps byte-count caps near the native maximum and
+relies on overflow checks plus allocation failures for the hard stop:
+
+- `EXRI_MAX_INPUT_SIZE`: `(size_t)-1` for file, callback, and memory inputs.
+- `EXRI_MAX_OUTPUT_SIZE`: `(size_t)-1` for memory/callback/file writer output.
+- `EXRI_MAX_PIXELS`: `((size_t)-1) / (4 * sizeof(float))` decoded pixels or
+  deep samples. For ordinary RGBA float output this is the largest pixel count
+  whose final allocation size can be represented by `size_t`.
+- `EXRI_MAX_DIMENSIONS`: 16,777,216 pixels per axis.
+
+Define these macros before the implementation include to raise or lower the
+policy caps for a build. The caps are checked before allocation growth and
+before direct memory input parsing. Individual EXR attribute sizes, image
+dimensions, channel counts, and decoded pixel counts still use bounded `int`
+interfaces because those values are format or API scalar values rather than
+whole-buffer byte counts.
+
+On 64-bit builds, the default pixel cap is above the default dimension-product
+cap, so the largest accepted ordinary image dimensions are governed by
+`EXRI_MAX_DIMENSIONS` (`16,777,216 * 16,777,216`, or `2^48`, pixels). On 32-bit
+builds, the native address space remains the practical cap.
 
 ## Load Flags
 

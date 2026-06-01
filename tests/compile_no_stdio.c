@@ -8,7 +8,7 @@ int main(void)
    exri_uc *out;
    exri_write_options options;
    float pixel[4];
-   int out_len;
+   size_t out_len;
 
    data[0] = 0;
    data[1] = 0;

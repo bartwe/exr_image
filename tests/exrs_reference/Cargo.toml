@@ -1,0 +1,10 @@
+[package]
+name = "exri_exrs_reference"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+exr = { path = "exrs-source", default-features = false }
+
+[build-dependencies]

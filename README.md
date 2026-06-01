@@ -118,10 +118,16 @@ matrix.
 All public loaders return `int` status and write allocations through output
 pointers. Free anything allocated by the library with `exri_image_free()`.
 
-The public ABI uses `int`, `float`, pointer arguments, and plain structs. Define
+The public ABI uses `int` for image dimensions and status values, `size_t` for
+memory byte counts, `float`, pointer arguments, and plain structs. Define
 `EXRI_DLL_EXPORT` when building a Windows DLL, `EXRI_DLL_IMPORT` when consuming
 one, and `EXRI_STDCALL` if the exported functions and callbacks should use
 `__stdcall`.
+
+Default input and writer-output byte caps are set near the native `size_t`
+maximum. Decoded image allocations are capped by overflow-safe `size_t` math,
+with dimensions capped at 16,777,216 pixels per axis. These caps can be
+overridden at compile time; see [docs/abi.md](docs/abi.md).
 
 Define `EXRI_NO_STDIO` before including the header to remove filename helpers and
 use memory/callback APIs only.
@@ -151,3 +157,12 @@ See [docs/checks.md](docs/checks.md) for environment switches and fuzzing notes.
 
 `exr_image.h` is BSD-3-Clause. See [LICENSE](LICENSE) and
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Security Note
+
+Filename helpers open, read or write, and close the named path for each call.
+Do not treat metadata read from a path as an authorization decision for a later
+load or write of the same path; another process can replace the file between
+calls. Security-sensitive callers should open and authorize the file once, read
+that same object into memory or expose it through callbacks, and then use the
+`*_from_memory()` or `*_from_callbacks()` APIs.

@@ -151,26 +151,25 @@ static void *guard_realloc(void *p, size_t n)
 typedef struct
 {
    unsigned char const *data;
-   int len;
-   int pos;
+   size_t len;
+   size_t pos;
 } bounds_reader;
 
-static int bounds_read(void *user, char *data, int size)
+static int bounds_read(void *user, void *data, size_t size, size_t *bytes_read)
 {
    bounds_reader *reader;
-   int n;
+   size_t n;
 
    reader = (bounds_reader *) user;
    n = reader->len - reader->pos;
    if (n > size)
       n = size;
-   if (n < 0)
-      n = 0;
    if (n > 0) {
-      memcpy(data, reader->data + reader->pos, (size_t) n);
+      memcpy(data, reader->data + reader->pos, n);
       reader->pos += n;
    }
-   return n;
+   *bytes_read = n;
+   return 1;
 }
 
 static unsigned char *read_file(char const *path, int *out_len)
@@ -224,28 +223,28 @@ static int exercise_memory(char const *path, unsigned char const *data, int len)
    int count;
    float *pixels;
 
-   (void) exri_is_exr_from_memory(data, len);
+   (void) exri_is_exr_from_memory(data, (size_t) len);
    if (!clean("memory is_exr", path))
       return 0;
-   (void) exri_info_from_memory(data, len, &x, &y, &comp);
+   (void) exri_info_from_memory(data, (size_t) len, &x, &y, &comp);
    if (!clean("memory info", path))
       return 0;
-   (void) exri_channel_count_from_memory(data, len, &comp);
+   (void) exri_channel_count_from_memory(data, (size_t) len, &comp);
    if (!clean("memory channel_count", path))
       return 0;
-   (void) exri_attribute_count_from_memory(data, len, &comp);
+   (void) exri_attribute_count_from_memory(data, (size_t) len, &comp);
    if (!clean("memory attribute_count", path))
       return 0;
-   (void) exri_is_spectral_from_memory(data, len);
+   (void) exri_is_spectral_from_memory(data, (size_t) len);
    if (!clean("memory is_spectral", path))
       return 0;
-   (void) exri_spectrum_type_from_memory(data, len, &comp);
+   (void) exri_spectrum_type_from_memory(data, (size_t) len, &comp);
    if (!clean("memory spectrum_type", path))
       return 0;
-   (void) exri_spectral_wavelengths_from_memory(data, len, wavelengths, 8, &count);
+   (void) exri_spectral_wavelengths_from_memory(data, (size_t) len, wavelengths, 8, &count);
    if (!clean("memory spectral_wavelengths", path))
       return 0;
-   (void) exri_spectral_units_from_memory(data, len, units, (int) sizeof(units));
+   (void) exri_spectral_units_from_memory(data, (size_t) len, units, (int) sizeof(units));
    if (!clean("memory spectral_units", path))
       return 0;
 
@@ -317,7 +316,7 @@ static int exercise_callbacks(char const *path, unsigned char const *data, int l
    cb.skip = NULL;
    cb.eof = NULL;
    reader.data = data;
-   reader.len = len;
+   reader.len = (size_t) len;
 
    reader.pos = 0;
    (void) exri_is_exr_from_callbacks(&cb, &reader);

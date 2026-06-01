@@ -149,12 +149,15 @@ static void add_data_window(unsigned char *b, int *pp, unsigned int minx, unsign
    *pp = p;
 }
 
-static int bad_read(void *user, char *data, int size)
+static int bad_read(void *user, void *data, size_t size, size_t *bytes_read)
 {
    (void) user;
+   (void) data;
    if (size > 0)
-      data[0] = 0;
-   return size + 1;
+      *bytes_read = size + 1u;
+   else
+      *bytes_read = 0;
+   return 1;
 }
 
 static int probe_data_window(void)
@@ -172,7 +175,7 @@ static int probe_data_window(void)
    add_compression(b, &p);
    add_data_window(b, &p, 0x80000000u, 0u, 0x7fffffffu, 0u);
    b[p++] = 0;
-   return exri_info_from_memory(b, p, &x, &y, &c) == 0;
+   return exri_info_from_memory(b, (size_t) p, &x, &y, &c) == 0;
 }
 
 static int probe_sampling_range(void)
@@ -190,7 +193,7 @@ static int probe_sampling_range(void)
    add_compression(b, &p);
    add_data_window(b, &p, 0u, 0u, 0u, 0u);
    b[p++] = 0;
-   return exri_info_from_memory(b, p, &x, &y, &c) == 0;
+   return exri_info_from_memory(b, (size_t) p, &x, &y, &c) == 0;
 }
 
 static int probe_known_attribute_type_mismatch(void)
@@ -209,7 +212,7 @@ static int probe_known_attribute_type_mismatch(void)
    add_compression(b, &p);
    add_data_window(b, &p, 0u, 0u, 0u, 0u);
    b[p++] = 0;
-   return exri_info_from_memory(b, p, &x, &y, &c) == 0;
+   return exri_info_from_memory(b, (size_t) p, &x, &y, &c) == 0;
 }
 
 static int probe_zlib_adler(void)
@@ -296,7 +299,7 @@ static int probe_duplicate_chunk(void)
       return 0;
 
    channels = NULL;
-   if (!exri__parse_header(buf, len, &info, &channels)) {
+   if (!exri__parse_header(buf, (size_t) len, &info, &channels)) {
       exri_image_free(buf);
       return 0;
    }
@@ -361,8 +364,8 @@ static int probe_piz_trailing_payload(void)
    int block_lines;
    int num_blocks;
    int i;
-   int chunk_offset;
-   int max_offset;
+   size_t chunk_offset;
+   size_t max_offset;
    int data_len;
    int x;
    int y;
@@ -378,7 +381,7 @@ static int probe_piz_trailing_payload(void)
       return 0;
 
    channels = NULL;
-   if (!exri__parse_header(buf, len, &info, &channels)) {
+   if (!exri__parse_header(buf, (size_t) len, &info, &channels)) {
       exri_image_free(buf);
       return 0;
    }
@@ -394,9 +397,9 @@ static int probe_piz_trailing_payload(void)
 
    block_lines = 32;
    num_blocks = (int) (((size_t) info.height + (size_t) block_lines - 1u) / (size_t) block_lines);
-   max_offset = -1;
+   max_offset = 0;
    for (i = 0; i < num_blocks; ++i) {
-      if (!exri__get64le_as_int_at(buf + info.header_end + i * 8, &chunk_offset)) {
+      if (!exri__get64le_as_size_at(buf + info.header_end + i * 8, &chunk_offset)) {
          exri_image_free(buf);
          return 0;
       }
@@ -404,7 +407,7 @@ static int probe_piz_trailing_payload(void)
          max_offset = chunk_offset;
    }
 
-   if (!exri__has_bytes_at(max_offset, len, 8)) {
+   if (!exri__has_file_bytes_at(max_offset, (size_t) len, 8)) {
       exri_image_free(buf);
       return 0;
    }

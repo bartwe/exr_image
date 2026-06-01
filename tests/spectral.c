@@ -13,26 +13,25 @@ typedef struct
 typedef struct
 {
    unsigned char const *data;
-   int len;
-   int pos;
+   size_t len;
+   size_t pos;
 } memory_reader;
 
-static int EXRI_CALLBACK read_cb(void *user, char *data, int size)
+static int EXRI_CALLBACK read_cb(void *user, void *data, size_t size, size_t *bytes_read)
 {
    memory_reader *reader;
-   int n;
+   size_t n;
 
    reader = (memory_reader *) user;
    n = reader->len - reader->pos;
    if (n > size)
       n = size;
-   if (n < 0)
-      n = 0;
    if (n > 0) {
-      memcpy(data, reader->data + reader->pos, (size_t) n);
+      memcpy(data, reader->data + reader->pos, n);
       reader->pos += n;
    }
-   return n;
+   *bytes_read = n;
+   return 1;
 }
 
 static int nearf(float a, float b)
@@ -229,28 +228,28 @@ int main(void)
       return 1;
    }
 
-   if (!exri_is_spectral_from_memory(header.data, header.len)) {
+   if (!exri_is_spectral_from_memory(header.data, (size_t) header.len)) {
       fprintf(stderr, "spectral detection failed: %s\n", exri_failure_reason());
       return 1;
    }
-   if (exri_is_spectral_from_memory(no_layout.data, no_layout.len)) {
+   if (exri_is_spectral_from_memory(no_layout.data, (size_t) no_layout.len)) {
       fprintf(stderr, "non-spectral header was accepted\n");
       return 1;
    }
 
    spectrum_type = -1;
-   if (!exri_spectrum_type_from_memory(header.data, header.len, &spectrum_type) ||
+   if (!exri_spectrum_type_from_memory(header.data, (size_t) header.len, &spectrum_type) ||
        spectrum_type != EXRI_SPECTRUM_POLARISED) {
       fprintf(stderr, "bad spectrum type: %d reason=%s\n", spectrum_type, exri_failure_reason());
       return 1;
    }
 
    count = -1;
-   if (!exri_spectral_wavelengths_from_memory(header.data, header.len, NULL, 0, &count) || count != 2) {
+   if (!exri_spectral_wavelengths_from_memory(header.data, (size_t) header.len, NULL, 0, &count) || count != 2) {
       fprintf(stderr, "bad wavelength count: %d reason=%s\n", count, exri_failure_reason());
       return 1;
    }
-   if (exri_spectral_wavelengths_from_memory(header.data, header.len, wavelengths, 1, &count)) {
+   if (exri_spectral_wavelengths_from_memory(header.data, (size_t) header.len, wavelengths, 1, &count)) {
       fprintf(stderr, "too-small wavelength buffer accepted\n");
       return 1;
    }
@@ -258,7 +257,7 @@ int main(void)
       fprintf(stderr, "too-small wavelength count not reported: %d\n", count);
       return 1;
    }
-   if (!exri_spectral_wavelengths_from_memory(header.data, header.len, wavelengths, 2, &count) ||
+   if (!exri_spectral_wavelengths_from_memory(header.data, (size_t) header.len, wavelengths, 2, &count) ||
        count != 2 ||
        !nearf(wavelengths[0], 550.0f) ||
        !nearf(wavelengths[1], 610.5f)) {
@@ -266,18 +265,18 @@ int main(void)
       return 1;
    }
 
-   units_len = exri_spectral_units_from_memory(header.data, header.len, NULL, 0);
+   units_len = exri_spectral_units_from_memory(header.data, (size_t) header.len, NULL, 0);
    if (units_len != (int) strlen("W.m^-2.sr^-1.nm^-1")) {
       fprintf(stderr, "bad units length: %d reason=%s\n", units_len, exri_failure_reason());
       return 1;
    }
-   if (!exri_spectral_units_from_memory(header.data, header.len, units, (int) sizeof(units)) ||
+   if (!exri_spectral_units_from_memory(header.data, (size_t) header.len, units, (int) sizeof(units)) ||
        strcmp(units, "W.m^-2.sr^-1.nm^-1") != 0) {
       fprintf(stderr, "bad units string: %s reason=%s\n", units, exri_failure_reason());
       return 1;
    }
    strcpy(units, "stale");
-   if (exri_spectral_units_from_memory(header.data, header.len, units, 4) || units[0] != 0) {
+   if (exri_spectral_units_from_memory(header.data, (size_t) header.len, units, 4) || units[0] != 0) {
       fprintf(stderr, "too-small units buffer accepted or left stale data\n");
       return 1;
    }
@@ -287,12 +286,12 @@ int main(void)
       return 1;
    }
    spectrum_type = -1;
-   if (!exri_spectrum_type_from_memory(header.data, header.len, &spectrum_type) ||
+   if (!exri_spectrum_type_from_memory(header.data, (size_t) header.len, &spectrum_type) ||
        spectrum_type != EXRI_SPECTRUM_REFLECTIVE) {
       fprintf(stderr, "bad reflective spectrum type: %d reason=%s\n", spectrum_type, exri_failure_reason());
       return 1;
    }
-   if (!exri_spectral_units_from_memory(header.data, header.len, units, (int) sizeof(units)) ||
+   if (!exri_spectral_units_from_memory(header.data, (size_t) header.len, units, (int) sizeof(units)) ||
        strcmp(units, "W.m^-2.sr^-1.nm^-1") != 0) {
       fprintf(stderr, "bad reflective units string: %s reason=%s\n", units, exri_failure_reason());
       return 1;
@@ -302,7 +301,7 @@ int main(void)
    cb.skip = NULL;
    cb.eof = NULL;
    reader.data = header.data;
-   reader.len = header.len;
+   reader.len = (size_t) header.len;
    reader.pos = 0;
    if (!exri_is_spectral_from_callbacks(&cb, &reader)) {
       fprintf(stderr, "callback spectral detection failed: %s\n", exri_failure_reason());

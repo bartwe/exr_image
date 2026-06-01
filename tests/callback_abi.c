@@ -10,37 +10,38 @@
 typedef struct
 {
    unsigned char const *data;
-   int len;
-   int pos;
+   size_t len;
+   size_t pos;
 } callback_abi_reader;
 
-static int EXRI_CALLBACK callback_abi_read(void *user, char *data, int size)
+static int EXRI_CALLBACK callback_abi_read(void *user, void *data, size_t size, size_t *bytes_read)
 {
    callback_abi_reader *reader;
-   int n;
-   int i;
+   unsigned char *dst;
+   size_t n;
+   size_t i;
 
    reader = (callback_abi_reader *) user;
+   dst = (unsigned char *) data;
    n = reader->len - reader->pos;
    if (n > size)
       n = size;
-   if (n < 0)
-      n = 0;
 
    for (i = 0; i < n; ++i)
-      data[i] = (char) reader->data[reader->pos + i];
+      dst[i] = reader->data[reader->pos + i];
    reader->pos += n;
-   return n;
+   *bytes_read = n;
+   return 1;
 }
 
-static int EXRI_CALLBACK callback_abi_write(void *user, void const *data, int size)
+static int EXRI_CALLBACK callback_abi_write(void *user, void const *data, size_t size)
 {
-   int *written;
+   size_t *written;
 
    (void) data;
-   written = (int *) user;
+   written = (size_t *) user;
    *written += size;
-   return size;
+   return 1;
 }
 
 int main(void)
@@ -51,7 +52,7 @@ int main(void)
    exri_write_callbacks wcb;
    exri_write_options options;
    float pixel[4];
-   int written;
+   size_t written;
 
    data[0] = 0x76;
    data[1] = 0x2f;
@@ -63,7 +64,7 @@ int main(void)
    data[7] = 0x00;
 
    reader.data = data;
-   reader.len = (int) sizeof(data);
+   reader.len = sizeof(data);
    reader.pos = 0;
 
    cb.read = callback_abi_read;

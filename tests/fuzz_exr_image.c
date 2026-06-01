@@ -14,49 +14,53 @@
 typedef struct
 {
    unsigned char const *data;
-   int len;
-   int pos;
+   size_t len;
+   size_t pos;
 } exri_fuzz_reader;
 
-static int EXRI_CALLBACK exri_fuzz_read(void *user, char *data, int size);
-static void EXRI_CALLBACK exri_fuzz_skip(void *user, int n);
+static int EXRI_CALLBACK exri_fuzz_read(void *user, void *data, size_t size, size_t *bytes_read);
+static int EXRI_CALLBACK exri_fuzz_skip(void *user, size_t n);
 static int EXRI_CALLBACK exri_fuzz_eof(void *user);
-static void exri_fuzz_call_callbacks(unsigned char const *data, int len);
-static void exri_fuzz_metadata(unsigned char const *data, int len);
-static void exri_fuzz_loaders(unsigned char const *data, int len);
+static void exri_fuzz_call_callbacks(unsigned char const *data, size_t len);
+static void exri_fuzz_metadata(unsigned char const *data, size_t len);
+static void exri_fuzz_loaders(unsigned char const *data, size_t len);
 int LLVMFuzzerTestOneInput(unsigned char const *data, size_t size);
 
-static int EXRI_CALLBACK exri_fuzz_read(void *user, char *data, int size)
+static int EXRI_CALLBACK exri_fuzz_read(void *user, void *data, size_t size, size_t *bytes_read)
 {
    exri_fuzz_reader *reader;
-   int remaining;
+   size_t remaining;
 
    reader = (exri_fuzz_reader *) user;
-   if (reader == NULL || data == NULL || size < 0)
-      return -1;
-   if (reader->pos >= reader->len)
+   if (reader == NULL || data == NULL || bytes_read == NULL)
       return 0;
+   if (reader->pos >= reader->len) {
+      *bytes_read = 0;
+      return 1;
+   }
 
    remaining = reader->len - reader->pos;
    if (size > remaining)
       size = remaining;
-   memcpy(data, reader->data + reader->pos, (size_t) size);
+   memcpy(data, reader->data + reader->pos, size);
    reader->pos += size;
-   return size;
+   *bytes_read = size;
+   return 1;
 }
 
-static void EXRI_CALLBACK exri_fuzz_skip(void *user, int n)
+static int EXRI_CALLBACK exri_fuzz_skip(void *user, size_t n)
 {
    exri_fuzz_reader *reader;
 
    reader = (exri_fuzz_reader *) user;
-   if (reader == NULL || n <= 0)
-      return;
+   if (reader == NULL)
+      return 0;
    if (n > reader->len - reader->pos) {
       reader->pos = reader->len;
-      return;
+      return 1;
    }
    reader->pos += n;
+   return 1;
 }
 
 static int EXRI_CALLBACK exri_fuzz_eof(void *user)
@@ -69,7 +73,7 @@ static int EXRI_CALLBACK exri_fuzz_eof(void *user)
    return reader->pos >= reader->len;
 }
 
-static void exri_fuzz_call_callbacks(unsigned char const *data, int len)
+static void exri_fuzz_call_callbacks(unsigned char const *data, size_t len)
 {
    exri_io_callbacks callbacks;
    exri_fuzz_reader reader;
@@ -117,7 +121,7 @@ static void exri_fuzz_call_callbacks(unsigned char const *data, int len)
    }
 }
 
-static void exri_fuzz_metadata(unsigned char const *data, int len)
+static void exri_fuzz_metadata(unsigned char const *data, size_t len)
 {
    char name[128];
    char type[128];
@@ -232,7 +236,7 @@ static void exri_fuzz_metadata(unsigned char const *data, int len)
    (void) exri_spectral_units_from_memory(data, len, units, (int) sizeof(units));
 }
 
-static void exri_fuzz_loaders(unsigned char const *data, int len)
+static void exri_fuzz_loaders(unsigned char const *data, size_t len)
 {
    float *pixels;
    float *samples;
@@ -325,14 +329,12 @@ static void exri_fuzz_loaders(unsigned char const *data, int len)
 
 int LLVMFuzzerTestOneInput(unsigned char const *data, size_t size)
 {
-   int len;
+   size_t len;
 
-   if (size > (size_t) INT_MAX)
-      return 0;
    if (size > (size_t) (32 * 1024 * 1024))
       return 0;
 
-   len = (int) size;
+   len = size;
    exri_fuzz_metadata(data, len);
    exri_fuzz_call_callbacks(data, len);
    exri_fuzz_loaders(data, len);

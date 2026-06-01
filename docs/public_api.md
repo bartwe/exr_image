@@ -16,11 +16,12 @@ API policy for `v0.1.x`:
   `exri_image_free()`.
 - All public loaders and writers return `int` status. On failure,
   `exri_failure_reason()` returns a short diagnostic string.
-- Memory APIs use `(exri_uc const *buffer, int len)` rather than `size_t` so the
-  ABI stays simple for DLL and C# callers.
+- Memory APIs use `(exri_uc const *buffer, size_t len)`, and writer memory APIs
+  return `size_t` output lengths. C# bindings should map these values to
+  `UIntPtr`/`nuint` or another platform-sized unsigned native type.
 - Filename helpers are optional and are removed by `EXRI_NO_STDIO`.
 - Callback APIs use `EXRI_CALLBACK` so `EXRI_STDCALL` can apply to callbacks and
-  exported functions consistently.
+  exported functions consistently. Callback byte counts are `size_t`.
 - Structs are plain C data with no embedded ownership.
 
 Do not add compatibility overloads before the first public release. If a name is

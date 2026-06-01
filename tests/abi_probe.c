@@ -72,7 +72,7 @@ int main(void)
    exri_uc *bytes;
    unsigned char *data;
    float *pixels;
-   int bytes_len;
+   size_t bytes_len;
    int len;
    int x;
    int y;
@@ -88,7 +88,7 @@ int main(void)
       fprintf(stderr, "memory write failed: %s\n", exri_failure_reason());
       return 1;
    }
-   if (!write_file(path, bytes, bytes_len)) {
+   if (bytes_len > (size_t) 0x7fffffff || !write_file(path, bytes, (int) bytes_len)) {
       fprintf(stderr, "file write failed\n");
       exri_image_free(bytes);
       return 1;
@@ -132,7 +132,7 @@ int main(void)
 
    pixels = NULL;
    x = y = comp = 0;
-   if (!exri_loadf_from_memory(&pixels, data, len, &x, &y, &comp, 4, EXRI_LOAD_DEFAULT)) {
+   if (!exri_loadf_from_memory(&pixels, data, (size_t) len, &x, &y, &comp, 4, EXRI_LOAD_DEFAULT)) {
       fprintf(stderr, "memory wrapper failed: %s\n", exri_failure_reason());
       free(data);
       exri_image_free(bytes);
@@ -150,7 +150,7 @@ int main(void)
    exri_image_free(pixels);
    pixels = NULL;
    x = y = comp = 0;
-   if (!exri_loadf_region_from_memory(&pixels, data, len, 0, 0, 1, 1, &x, &y, &comp, 4, EXRI_LOAD_DEFAULT)) {
+   if (!exri_loadf_region_from_memory(&pixels, data, (size_t) len, 0, 0, 1, 1, &x, &y, &comp, 4, EXRI_LOAD_DEFAULT)) {
       fprintf(stderr, "memory region wrapper failed: %s\n", exri_failure_reason());
       free(data);
       exri_image_free(bytes);

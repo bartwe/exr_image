@@ -2,11 +2,12 @@
 #define EXRI_STDCALL
 #include "../exr_image.h"
 
-static int EXRI_CALLBACK callback_stdcall_read(void *user, char *data, int size)
+static int EXRI_CALLBACK callback_stdcall_read(void *user, void *data, size_t size, size_t *bytes_read)
 {
    (void) user;
    (void) data;
-   return size;
+   *bytes_read = size;
+   return 1;
 }
 
 int main(void)
