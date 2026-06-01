@@ -56,7 +56,7 @@
 #endif
 #include <stddef.h>
 
-#define EXRI_VERSION 11
+#define EXRI_VERSION 12
 
 enum
 {
