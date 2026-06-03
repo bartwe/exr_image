@@ -15,6 +15,9 @@ Before tagging a public release:
 5. Review `docs/feature_coverage.md`, `docs/abi.md`, and `README.md` for stale
    claims.
 6. Confirm `VERSION` matches the intended tag.
+7. Prepare the GitHub release title and description from the changes since the
+   previous tag. Include highlights, known non-goals, validation, and asset
+   names.
 
 ## Source Package
 

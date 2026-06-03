@@ -219,8 +219,12 @@ static int probe_zlib_adler(void)
 {
    unsigned char out[1];
    unsigned char bad_stream[] = { 0x78, 0x01, 0x01, 0x01, 0x00, 0xfe, 0xff, 0x41, 0x00, 0x42, 0x00, 0x43 };
+   unsigned char valid_stream[] = { 0x78, 0x01, 0x73, 0x04, 0x00, 0x00, 0x42, 0x00, 0x42 };
+   unsigned char junk_before_adler[] = { 0x78, 0x01, 0x73, 0x04, 0x00, 0xff, 0x00, 0x42, 0x00, 0x42 };
 
-   return exri__zlib_decode_buffer(out, 1, bad_stream, (int) sizeof(bad_stream)) < 0;
+   return exri__zlib_decode_buffer(out, 1, bad_stream, (int) sizeof(bad_stream)) < 0 &&
+          exri__zlib_decode_buffer(out, 1, valid_stream, (int) sizeof(valid_stream)) == 1 &&
+          exri__zlib_decode_buffer(out, 1, junk_before_adler, (int) sizeof(junk_before_adler)) < 0;
 }
 
 static int probe_callback_count(void)

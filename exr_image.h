@@ -764,12 +764,18 @@ typedef struct
    exri_uc const *data;
    int size;
    int pos;
-   unsigned int bits;
-   int num_bits;
+   unsigned int buf;   /* buffered bits, LSB-first */
+   int avail;          /* valid bit count in buf */
 } exri__bits;
+
+#define EXRI__FAST_BITS 9
+#define EXRI__FAST_MASK ((1u << EXRI__FAST_BITS) - 1u)
 
 typedef struct
 {
+   /* fast[peek9bits]: low nibble = code length (1..9), bits 4+ = symbol.
+    * Zero means no code of length <=9 matches this prefix; use slow path. */
+   unsigned short fast[1 << EXRI__FAST_BITS];
    unsigned short code[288 + 32];
    unsigned char size[288 + 32];
    int num;
@@ -789,40 +795,39 @@ static unsigned int exri__bit_reverse(unsigned int v, int bits)
    return r;
 }
 
+static void exri__bits_fill(exri__bits *b)
+{
+   while (b->avail <= 24 && b->pos < b->size) {
+      b->buf |= (unsigned int)b->data[b->pos++] << b->avail;
+      b->avail += 8;
+   }
+}
+
 static int exri__bits_read(exri__bits *b, int n, unsigned int *out)
 {
-   unsigned int result;
-   int shift;
-
-   if (n < 0 || n > 24)
+   if (n <= 0 || n > 24)
       return 0;
-
-   result = 0;
-   shift = 0;
-
-   while (n > 0) {
-      if (b->num_bits == 0) {
-         if (b->pos >= b->size)
-            return 0;
-         b->bits = b->data[b->pos++];
-         b->num_bits = 8;
-      }
-
-      result |= (b->bits & 1u) << shift;
-      b->bits >>= 1;
-      b->num_bits -= 1;
-      shift += 1;
-      n -= 1;
-   }
-
-   *out = result;
+   exri__bits_fill(b);
+   if (b->avail < n)
+      return 0;
+   *out = b->buf & ((1u << n) - 1u);
+   b->buf >>= n;
+   b->avail -= n;
    return 1;
 }
 
 static void exri__bits_align_byte(exri__bits *b)
 {
-   b->bits = 0;
-   b->num_bits = 0;
+   /* discard partial byte; put back any fully-buffered unread bytes */
+   int complete = b->avail / 8;
+   b->pos -= complete;
+   b->buf = 0;
+   b->avail = 0;
+}
+
+static int exri__bits_aligned_pos(exri__bits const *b)
+{
+   return b->pos - b->avail / 8;
 }
 
 static int exri__huffman_build(exri__huffman *h, unsigned char const *sizes, int num)
@@ -858,12 +863,23 @@ static int exri__huffman_build(exri__huffman *h, unsigned char const *sizes, int
       next_code[len] = code;
    }
 
+   memset(h->fast, 0, sizeof(h->fast));
+
    for (i = 0; i < num; ++i) {
       len = sizes[i];
       if (len) {
-         h->code[i] = (unsigned short) exri__bit_reverse((unsigned int) next_code[len], len);
+         unsigned int c = (unsigned int) exri__bit_reverse((unsigned int) next_code[len], len);
+         h->code[i] = (unsigned short) c;
          h->size[i] = (unsigned char) len;
          next_code[len] += 1;
+
+         if (len <= EXRI__FAST_BITS) {
+            unsigned int step = 1u << len;
+            unsigned int j;
+            unsigned short entry = (unsigned short)((i << 4) | len);
+            for (j = c; j <= EXRI__FAST_MASK; j += step)
+               h->fast[j] = entry;
+         }
       }
    }
 
@@ -872,19 +888,41 @@ static int exri__huffman_build(exri__huffman *h, unsigned char const *sizes, int
 
 static int exri__huffman_decode(exri__bits *b, exri__huffman const *h, int *out_symbol)
 {
-   unsigned int code;
-   unsigned int bit;
+   unsigned short entry;
+   unsigned int c;
    int len;
    int i;
 
-   code = 0;
-   for (len = 1; len <= 15; ++len) {
-      if (!exri__bits_read(b, 1, &bit))
-         return 0;
-      code |= bit << (len - 1);
+   exri__bits_fill(b);
 
+   /* fast path: O(1) table lookup for codes <= EXRI__FAST_BITS long */
+   entry = h->fast[b->buf & EXRI__FAST_MASK];
+   if (entry) {
+      len = entry & 0xf;
+      if (b->avail < len)
+         return 0;
+      b->buf >>= len;
+      b->avail -= len;
+      *out_symbol = entry >> 4;
+      return 1;
+   }
+
+   /* slow path: code is longer than EXRI__FAST_BITS bits (rare) */
+   if (b->avail < EXRI__FAST_BITS)
+      return 0;
+   c = b->buf & EXRI__FAST_MASK;
+   b->buf >>= EXRI__FAST_BITS;
+   b->avail -= EXRI__FAST_BITS;
+
+   for (len = EXRI__FAST_BITS + 1; len <= 15; ++len) {
+      exri__bits_fill(b);
+      if (b->avail < 1)
+         return 0;
+      c |= (b->buf & 1u) << (len - 1);
+      b->buf >>= 1;
+      b->avail -= 1;
       for (i = 0; i < h->num; ++i) {
-         if (h->size[i] == len && h->code[i] == code) {
+         if (h->size[i] == (unsigned char) len && h->code[i] == (unsigned short) c) {
             *out_symbol = i;
             return 1;
          }
@@ -1161,8 +1199,8 @@ static int exri__zlib_decode_buffer(exri_uc *dst, int dst_len, exri_uc const *sr
    bits.data = src;
    bits.size = src_len - 4;
    bits.pos = 2;
-   bits.bits = 0;
-   bits.num_bits = 0;
+   bits.buf = 0;
+   bits.avail = 0;
    dst_pos = 0;
 
    do {
@@ -1190,7 +1228,7 @@ static int exri__zlib_decode_buffer(exri_uc *dst, int dst_len, exri_uc const *sr
       }
    } while (!final_block);
 
-   trailer_pos = bits.pos;
+   trailer_pos = exri__bits_aligned_pos(&bits);
    if (trailer_pos != src_len - 4)
       return -1;
 
