@@ -56,6 +56,12 @@
 #endif
 #include <stddef.h>
 
+#define EXRI_LIBRARY_VERSION "0.1.0-rc3"
+#define EXRI_LIBRARY_VERSION_MAJOR 0
+#define EXRI_LIBRARY_VERSION_MINOR 1
+#define EXRI_LIBRARY_VERSION_PATCH 0
+#define EXRI_LIBRARY_VERSION_RC 3
+
 #define EXRI_VERSION 12
 
 enum

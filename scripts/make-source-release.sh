@@ -25,12 +25,14 @@ esac
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
 mkdir -p "$STAGE/docs" "$STAGE/scripts" "$STAGE/tests"
+mkdir -p "$STAGE/tests/bench"
 mkdir -p "$OUT_DIR"
 
 cp README.md CONTRIBUTING.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md VERSION exr_image.h "$STAGE/"
 cp docs/*.md "$STAGE/docs/"
 cp scripts/*.sh scripts/*.cmd "$STAGE/scripts/"
 cp tests/*.c tests/*.h "$STAGE/tests/"
+cp tests/bench/* "$STAGE/tests/bench/"
 for reference_dir in tests/*_reference; do
    if [ -d "$reference_dir" ]; then
       cp -R "$reference_dir" "$STAGE/tests/"

@@ -1,7 +1,7 @@
 # Release Process
 
 This project is not ready for a `1.0` API promise until it has seen downstream
-use, but it is ready for a source-based `v0.1.0-rc2` release candidate.
+use, but it is ready for a source-based `0.1.0-rc3` release candidate.
 
 ## Source Checklist
 
@@ -49,7 +49,7 @@ created.
 Use the semantic release name as the tag, for example:
 
 ```sh
-git tag -a v0.1.0-rc2 -m "exr_image.h v0.1.0-rc2"
+git tag -a 0.1.0-rc3 -m "exr_image.h 0.1.0-rc3"
 ```
 
 Attach the generated header, source archives, and checksum file. Avoid attaching
